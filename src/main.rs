@@ -1,11 +1,10 @@
-use axum::{routing::get, Router};
-
+mod router;
 mod routes;
 mod templates;
 
 #[tokio::main]
 async fn main() {
-    let app = Router::new().route("/", get(routes::home));
+    let app = router::init_router();
 
     // run it
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")

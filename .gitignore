@@ -1,1 +1,9 @@
+# Generated files
 /target
+
+crates/agent/target
+
+# Well, this depends... See below!
+Cargo.lock
+
+.gcp_credentials.json

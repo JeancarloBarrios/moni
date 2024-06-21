@@ -7,4 +7,7 @@ pub enum GemineAgentError {
 
     #[error("gcp auth error")]
     GCPAuth(gcp_auth::Error),
+
+    #[error("client error")]
+    HTTPClient(reqwest::Error),
 }

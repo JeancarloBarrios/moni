@@ -2,7 +2,9 @@ use std::sync::Arc;
 
 use gcp_auth::Token;
 
-use crate::errors::GemineAgentError;
+use crate::{errors::GemineAgentError, Content, CountTokensRequest, CountTokensResponse, Part};
+
+static MODEL_NAME: &str = "gemini-pro";
 
 pub struct GeminiAgent {
     project_id: String,
@@ -80,6 +82,45 @@ impl GeminiAgent {
         let scopes = &["https://www.googleapis.com/auth/cloud-platform"];
         let token = provider.token(scopes).await?;
         Ok(token)
+    }
+
+    fn get_url(&self) -> String {
+        let project_id = &self.project_id;
+        let location_id = &self.location_id;
+        let api_endpoint = &self.api_endpoint;
+        let endpoint_url = format!(
+        "https://{api_endpoint}/v1beta1/projects/{project_id}/locations/{location_id}/publishers/google/models/{MODEL_NAME}:countTokens"
+        );
+        endpoint_url
+    }
+
+    async fn test_promt(&mut self) -> Result<(), GemineAgentError> {
+        let token = self.get_token().await.map_err(GemineAgentError::GCPAuth)?;
+        let prompt = "What is the airspeed of an unladen swallow?";
+
+        let payload = CountTokensRequest {
+            contents: Content {
+                role: "user".to_string(),
+                parts: vec![Part::Text(prompt.to_string())],
+            },
+        };
+
+        let resp = reqwest::Client::new()
+            .post(&self.get_url())
+            .bearer_auth(token.as_str())
+            .json(&payload)
+            .send()
+            .await
+            .map_err(GemineAgentError::HTTPClient)?;
+
+        let response = resp
+            .json::<CountTokensResponse>()
+            .await
+            .map_err(GemineAgentError::HTTPClient)?;
+
+        println!("{}", response.total_tokens);
+
+        Ok(())
     }
 }
 

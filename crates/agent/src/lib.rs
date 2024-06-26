@@ -1,4 +1,4 @@
-pub mod errors;
+mod errors;
 mod gemini;
 
 use std::collections::HashMap;
@@ -128,4 +128,3 @@ pub struct FunctionParametersProperty {
     pub r#type: String,
     pub description: String,
 }
-

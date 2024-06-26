@@ -136,6 +136,7 @@ mod tests {
             .api_endpoint("api_endpoint")
             .build()
             .await;
+        print!("test");
         assert!(result.is_ok());
     }
 

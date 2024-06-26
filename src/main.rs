@@ -1,8 +1,9 @@
-mod router;
+ mod router;
 mod routes;
 mod templates;
+ mod documents;
 
-#[tokio::main]
+ #[tokio::main]
 async fn main() {
     let app = router::init_router();
 

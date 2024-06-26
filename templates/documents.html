@@ -1,0 +1,10 @@
+<!--todos.html-->
+
+<!--jinja syntax -->
+{% for doc in docs %}
+<li>
+    <span>{{ doc.url }}</span>
+    <span>{{ doc.title }}</span>
+    <sl-button size="small" hx-delete="/documents/{{doc.id}}" hx-target="#documents" class="complete">View</sl-button>
+</li>
+{% endfor %}

@@ -129,4 +129,3 @@ pub struct FunctionParametersProperty {
     pub r#type: String,
     pub description: String,
 }
-

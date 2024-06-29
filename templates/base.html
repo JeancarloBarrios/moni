@@ -1,20 +1,132 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <script src="/static/htmx.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/themes/light.css" />
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/shoelace-autoloader.js"></script>
+<head>
+  <script src="/static/htmx.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/themes/light.css" />
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/shoelace-autoloader.js"></script>
 
-    <!-- Allow any inheriting page to set it's own title -->
-    <title>{% block title %}{{ title }}{% endblock %}</title>
+  <!-- Allow any inheriting page to set its own title -->
+  <title>{% block title %}{{ title }}{% endblock %}</title>
 
-    <!-- Allow any inheriting page to extend head with additional assets -->
-    {% block head %}{% endblock %}
-  </head>
-  <body>
-    <div id="content">
-      <!-- Inheriting pages will have their content rendered here, similar to app root in React, Angular, etc. -->
-      {% block content %}{% endblock %}
-    </div>
-  </body>
+  <!-- Allow any inheriting page to extend head with additional assets -->
+  {% block head %}{% endblock %}
+
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: var(--sl-color-neutral-100);
+    }
+
+    .sidebar {
+      width: 250px;
+      background-color: var(--sl-panel-background-color);
+      padding: 20px;
+      box-shadow: var(--sl-shadow-x-small);
+      position: fixed;
+      top: 0;
+      bottom: 0;
+    }
+
+    .sidebar h2 {
+      color: var(--sl-color-gray-700);
+      font-size: var(--sl-font-size-large);
+      margin-bottom: 20px;
+    }
+
+    .navbar {
+      background-color: var(--sl-color-primary-500);
+      color: var(--sl-color-white);
+      padding: 10px 20px;
+      display: flex;
+      justify-content: right;
+      align-items: center;
+      box-shadow: var(--sl-shadow-small);
+      margin-left: 250px;
+      height: 60px;
+    }
+
+
+    .nav-links sl-button {
+      margin-right: 15px;
+    }
+
+    .content-wrapper {
+      display: flex;
+      flex: 1;
+      margin-top: 60px; /* Adjust for the height of the navbar */
+      margin-left: 350px; /* Adjust for the width of the sidebar */
+    }
+
+    .content {
+      flex: 1;
+      padding: 20px;
+    }
+
+    sl-menu {
+      width: 100%;
+    }
+
+    sl-menu-item {
+      padding: 10px 15px;
+      display: flex;
+      align-items: center;
+    }
+
+    sl-menu-item sl-icon {
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+<div class="sidebar">
+  <img src="/static/img.png" alt="Moni Logo" style="width: 150px; height: auto;">
+
+  <sl-menu>
+    <sl-menu-item>
+      <sl-icon name="house"></sl-icon>
+      <span>Home</span>
+    </sl-menu-item>
+    <sl-menu-item>
+      <sl-icon name="file-earmark"></sl-icon>
+      <span>Documents</span>
+    </sl-menu-item>
+    <sl-menu-item>
+      <sl-icon name="gear"></sl-icon>
+      <span>Settings</span>
+    </sl-menu-item>
+  </sl-menu>
+</div>
+
+<div class="navbar">
+
+  <div class="nav-links">
+    <sl-dropdown>
+      <sl-button slot="trigger" circle size="large" variant="text">
+        <sl-icon name="person-circle" style="font-size: 2em;"></sl-icon>
+      </sl-button>
+      <sl-menu>
+        <sl-menu-item>
+          <sl-icon name="gear"></sl-icon>
+          <span>Settings</span>
+        </sl-menu-item>
+        <sl-menu-item>
+          <sl-icon name="box-arrow-right"></sl-icon>
+          <span>Logout</span>
+        </sl-menu-item>
+      </sl-menu>
+    </sl-dropdown>
+  </div>
+</div>
+
+<div class="content-wrapper">
+  <!-- Main content area -->
+  <div class="content">
+    {% block content %}{% endblock %}
+  </div>
+</div>
+</body>
 </html>

@@ -3,7 +3,7 @@ use askama_axum::IntoResponse;
 use crate::templates;
 use crate::templates::DocumentTemplate;
 use crate::templates::HtmlTemplate;
-use agent::documents::read_documents;
+use crate::documents::read_documents;
 pub async fn home() -> impl IntoResponse {
     templates::Index
 }

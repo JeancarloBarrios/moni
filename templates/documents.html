@@ -1,10 +1,10 @@
-<!--todos.html-->
-
-<!--jinja syntax -->
-{% for doc in docs %}
-<li>
-    <span>{{ doc.url }}</span>
-    <span>{{ doc.title }}</span>
-    <sl-button size="small" hx-delete="/documents/{{doc.id}}" hx-target="#documents" class="complete">View</sl-button>
-</li>
-{% endfor %}
+{% extends "base.html" %}
+{% block title %}Documents{% endblock %}
+{% block content %}
+<h1>Documents</h1>
+<ul>
+    {% for doc in docs %}
+        {% include "document_card.html" %}
+    {% endfor %}
+</ul>
+{% endblock %}

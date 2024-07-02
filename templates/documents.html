@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Documents{% endblock %}
+{% block content %}
+<h1>Documents</h1>
+<ul>
+    {% for doc in docs %}
+        {% include "document_card.html" %}
+    {% endfor %}
+</ul>
+{% endblock %}

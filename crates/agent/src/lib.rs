@@ -1,4 +1,4 @@
-mod errors;
+pub mod errors;
 mod gemini;
 
 use std::collections::HashMap;

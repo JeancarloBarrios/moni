@@ -10,6 +10,7 @@ pub enum RunMode {
 #[derive(Debug, Deserialize)]
 pub struct Database {
     pub url: String,
+    pub connections: u32,
 }
 
 #[derive(Debug, Deserialize)]

@@ -1,27 +1,26 @@
-
 use sqlx::postgres::PgPoolOptions;
 
+mod documents;
 mod router;
 mod routes;
 mod settings;
 mod templates;
- mod documents;
 
- #[tokio::main]
+#[tokio::main]
 async fn main() {
     // load settings
     let settings = settings::Settings::new().unwrap();
 
     println!("{:?}", settings.database.url.as_str());
 
+    // setup database
     let db = PgPoolOptions::new()
-        .max_connections(20)
+        .max_connections(settings.database.connections)
         .connect(settings.database.url.as_str())
         .await
         .unwrap();
 
-    println!("{:?}", db);
-
+    // run migrations
     sqlx::migrate!().run(&db).await.unwrap();
 
     let app = router::init_router();

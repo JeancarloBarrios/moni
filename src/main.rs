@@ -11,7 +11,7 @@ async fn main() {
     // load settings
     let settings = settings::Settings::new().unwrap();
 
-    println!("{:?}", settings.database.url.as_str());
+    println!("{:?}", settings);
 
     // setup database
     let db = PgPoolOptions::new()
@@ -26,9 +26,10 @@ async fn main() {
     let app = router::init_router();
 
     // run it
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
-        .await
-        .unwrap();
+    let listener =
+        tokio::net::TcpListener::bind(format!("{}:{}", settings.server.host, settings.server.port))
+            .await
+            .unwrap();
     println!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
 }

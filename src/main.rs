@@ -1,10 +1,11 @@
-use sqlx::postgres::PgPoolOptions;
-
 mod documents;
 mod router;
 mod routes;
 mod settings;
 mod templates;
+
+use sqlx::postgres::PgPoolOptions;
+
 
 #[tokio::main]
 async fn main() {

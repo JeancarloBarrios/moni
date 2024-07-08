@@ -20,10 +20,17 @@ pub struct Server {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct FirebaseConfig {
+    pub key: String,
+    pub url: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Settings {
     pub debug: bool,
     pub database: Database,
     pub server: Server,
+    pub firebase_config: FirebaseConfig,
 }
 
 impl FromStr for RunMode {

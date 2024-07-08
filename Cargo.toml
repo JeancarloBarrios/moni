@@ -20,3 +20,5 @@ agent = { path = "./crates/agent" }
 
 tower = { version = "0.4.13", features = ["util"] }
 tower-http = { version = "0.5.2", features = ["fs"] }
+firebase-rs = "2.1.2"
+thiserror = "1.0.61"

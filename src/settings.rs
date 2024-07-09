@@ -10,11 +10,19 @@ pub enum RunMode {
 #[derive(Debug, Deserialize)]
 pub struct Database {
     pub url: String,
+    pub connections: u32,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Server {
+    pub host: String,
     pub port: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct FirebaseConfig {
+    pub key: String,
+    pub url: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -22,6 +30,7 @@ pub struct Settings {
     pub debug: bool,
     pub database: Database,
     pub server: Server,
+    pub firebase_config: FirebaseConfig,
 }
 
 impl FromStr for RunMode {

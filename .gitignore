@@ -7,3 +7,4 @@ crates/agent/target
 Cargo.lock
 
 .gcp_credentials.json
+/.idea

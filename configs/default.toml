@@ -1,0 +1,7 @@
+debug = true
+
+[database]
+url = "postgresql://user:pass@localhost:5432/db"
+
+[server]
+port = 8080

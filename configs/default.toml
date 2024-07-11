@@ -2,6 +2,8 @@ debug = true
 
 [database]
 url = "postgresql://user:pass@localhost:5432/db"
+connections = 20
 
 [server]
+host = "127.0.0.1"
 port = 8080

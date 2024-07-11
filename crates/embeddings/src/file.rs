@@ -1,11 +1,8 @@
-use std::vec;
-
 use lopdf::Document;
 
 use crate::error::FileError;
 
 pub struct Content {
-    path: String,
     content: String,
 }
 
@@ -34,7 +31,6 @@ impl Content {
         }
 
         Ok(Content {
-            path: path.to_string(),
             content: texts.join(""),
         })
     }
@@ -50,22 +46,46 @@ pub trait ChunkGenerator {
 
 pub struct SentenseGenerator {}
 
+impl SentenseGenerator {
+    fn new() -> Self {
+        SentenseGenerator {}
+    }
+}
+
 impl ChunkGenerator for SentenseGenerator {
     fn generate(&self, content: &str) -> Vec<String> {
-        let g = unicode_segmentation::UnicodeSegmentation::unicode_sentences(content);
-        g.map(|s| s.to_string()).collect()
+        unicode_segmentation::UnicodeSegmentation::unicode_sentences(content)
+            .map(|s| s.to_string())
+            .collect()
+    }
+}
+
+pub struct ParagraphGenerator {}
+
+impl ParagraphGenerator {
+    fn new() -> Self {
+        ParagraphGenerator {}
+    }
+}
+
+impl ChunkGenerator for ParagraphGenerator {
+    fn generate(&self, content: &str) -> Vec<String> {
+        content.split("\n\n").map(String::from).collect::<Vec<_>>()
     }
 }
 
 #[test]
 fn test_extract_text_from_pdf() {
-    let path = "testdata/test.pdf";
+    let path = "testdata/sample.pdf";
     let file = Content::from_path(path);
     assert!(file.is_ok());
     let file = file.unwrap();
     println!("Contests");
-    let sentences = file.gen_chunks(SentenseGenerator {});
-    for sentence in sentences.iter().take(5) {
-        println!("{}", sentence);
+    let sentences = file.gen_chunks(SentenseGenerator::new());
+    for sentence in sentences.iter().take(10) {
+        println!(
+            "Sentence:------------------------------------------------ {}",
+            sentence
+        );
     }
 }

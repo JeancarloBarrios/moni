@@ -2,29 +2,27 @@ use lopdf::Document;
 
 use crate::error::FileError;
 
-pub struct File {
+type ChunkGenerator = fn(String) -> Vec<String>;
+
+pub struct Content {
     path: String,
     content: String,
 }
 
-impl File {
-    pub fn parse(path: &str) -> Result<Self, FileError> {
+impl Content {
+    pub fn from_path(path: &str) -> Result<Self, FileError> {
         let kind = infer::get_from_path(path)
             .map_err(FileError::IOError)?
             .ok_or(FileError::ParsingError(
                 "file type not supported".to_string(),
             ))?;
         match kind.mime_type() {
-            "application/pdf" => File::parse_pdf(path),
+            "application/pdf" => Content::parse_pdf(path),
             _ => Err(FileError::ParsingError("unsuported file".to_string())),
         }
     }
 
-    pub fn get_content(&self) -> String {
-        self.content.clone()
-    }
-
-    fn parse_pdf(path: &str) -> Result<File, FileError> {
+    fn parse_pdf(path: &str) -> Result<Content, FileError> {
         let documet = Document::load(path).map_err(FileError::PdfError)?;
         let pages = documet.get_pages();
         let mut texts = Vec::new();
@@ -35,25 +33,15 @@ impl File {
             texts.push(text.unwrap_or_default());
         }
 
-        Ok(File {
+        Ok(Content {
             path: path.to_string(),
             content: texts.join(""),
         })
     }
-}
 
-impl GetConlent for File {
-    fn get_content(&self) -> String {
-        self.get_content()
+    fn gen_chunks(&self, generator: ChunkGenerator) -> Vec<String> {
+        generator(self.content.clone())
     }
-}
-
-pub trait GetConlent {
-    fn get_content(&self) -> String;
-}
-
-pub fn extract_chunks(file: impl GetConlent, extractor: fn(String) -> Vec<String>) -> Vec<String> {
-    extractor(file.get_content())
 }
 
 pub fn extract_sentences(content: String) -> Vec<String> {
@@ -64,11 +52,11 @@ pub fn extract_sentences(content: String) -> Vec<String> {
 #[test]
 fn test_extract_text_from_pdf() {
     let path = "testdata/test.pdf";
-    let file = File::parse(path);
+    let file = Content::from_path(path);
     assert!(file.is_ok());
     let file = file.unwrap();
     println!("Contests");
-    let sentences = extract_chunks(file, extract_sentences);
+    let sentences = file.gen_chunks(extract_sentences);
     for sentence in sentences.iter().take(5) {
         println!("{}", sentence);
     }

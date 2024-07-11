@@ -2,13 +2,29 @@ use lopdf::Document;
 
 use crate::error::FileError;
 
-pub struct PdfFile {
+pub struct File {
     path: String,
     content: String,
 }
 
-impl PdfFile {
+impl File {
     pub fn parse(path: &str) -> Result<Self, FileError> {
+        let kind = infer::get_from_path(path)
+            .map_err(FileError::IOError)?
+            .ok_or(FileError::ParsingError(
+                "file type not supported".to_string(),
+            ))?;
+        match kind.mime_type() {
+            "application/pdf" => File::parse_pdf(path),
+            _ => Err(FileError::ParsingError("unsuported file".to_string())),
+        }
+    }
+
+    pub fn get_content(&self) -> String {
+        self.content.clone()
+    }
+
+    fn parse_pdf(path: &str) -> Result<File, FileError> {
         let documet = Document::load(path).map_err(FileError::PdfError)?;
         let pages = documet.get_pages();
         let mut texts = Vec::new();
@@ -19,18 +35,14 @@ impl PdfFile {
             texts.push(text.unwrap_or_default());
         }
 
-        Ok(PdfFile {
+        Ok(File {
             path: path.to_string(),
             content: texts.join(""),
         })
     }
-
-    pub fn get_content(&self) -> String {
-        self.content.clone()
-    }
 }
 
-impl GetConlent for PdfFile {
+impl GetConlent for File {
     fn get_content(&self) -> String {
         self.get_content()
     }
@@ -52,7 +64,7 @@ pub fn extract_sentences(content: String) -> Vec<String> {
 #[test]
 fn test_extract_text_from_pdf() {
     let path = "testdata/test.pdf";
-    let file = PdfFile::parse(path);
+    let file = File::parse(path);
     assert!(file.is_ok());
     let file = file.unwrap();
     println!("Contests");

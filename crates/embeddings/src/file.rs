@@ -1,8 +1,8 @@
+use std::vec;
+
 use lopdf::Document;
 
 use crate::error::FileError;
-
-type ChunkGenerator = fn(String) -> Vec<String>;
 
 pub struct Content {
     path: String,
@@ -39,14 +39,22 @@ impl Content {
         })
     }
 
-    fn gen_chunks(&self, generator: ChunkGenerator) -> Vec<String> {
-        generator(self.content.clone())
+    fn gen_chunks(&self, generator: impl ChunkGenerator) -> Vec<String> {
+        generator.generate(&self.content.clone())
     }
 }
 
-pub fn extract_sentences(content: String) -> Vec<String> {
-    let g = unicode_segmentation::UnicodeSegmentation::unicode_sentences(content.as_str());
-    g.map(|s| s.to_string()).collect()
+pub trait ChunkGenerator {
+    fn generate(&self, content: &str) -> Vec<String>;
+}
+
+pub struct SentenseGenerator {}
+
+impl ChunkGenerator for SentenseGenerator {
+    fn generate(&self, content: &str) -> Vec<String> {
+        let g = unicode_segmentation::UnicodeSegmentation::unicode_sentences(content);
+        g.map(|s| s.to_string()).collect()
+    }
 }
 
 #[test]
@@ -56,7 +64,7 @@ fn test_extract_text_from_pdf() {
     assert!(file.is_ok());
     let file = file.unwrap();
     println!("Contests");
-    let sentences = file.gen_chunks(extract_sentences);
+    let sentences = file.gen_chunks(SentenseGenerator {});
     for sentence in sentences.iter().take(5) {
         println!("{}", sentence);
     }

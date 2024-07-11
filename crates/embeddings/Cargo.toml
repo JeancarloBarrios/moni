@@ -1,0 +1,10 @@
+[package]
+name = "embeddings"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+lopdf = { workspace = true, features = ["pom", "pom_parser"] }
+thiserror = { workspace = true}
+unicode-segmentation = { workspace = true}
+

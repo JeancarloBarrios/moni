@@ -3,7 +3,10 @@ name = "moni"
 version = "0.1.0"
 edition = "2021"
 
-[dependencies]
+[workspace]
+members = ["crates/*"]
+
+[workspace.dependencies]
 anyhow = "1.0.86"
 askama = { version = "0.12.1", features = ["with-axum"] }
 askama_axum = "0.4.0"
@@ -22,3 +25,22 @@ tower-http = { version = "0.5.2", features = ["fs"] }
 firebase-rs = "2.1.2"
 thiserror = "1.0.61"
 uuid = { version = "1.9.1", features = ["v7"] }
+lopdf = { version = "0.32.0", features = ["pom", "pom_parser"] }
+unicode-segmentation = "1.9.0"
+
+[dependencies]
+anyhow.workspace = true
+askama = { workspace = true, features = ["with-axum"] }
+askama_axum.workspace = true
+axum.workspace = true
+config.workspace = true
+firebase-rs.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_derive.workspace = true
+serde_json.workspace = true
+sqlx.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["full"] }
+tower = { workspace = true, features = ["util"] }
+tower-http = { workspace = true, features = ["fs"] }
+uuid = { workspace = true, features = ["v7"] }

@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+mod data_sources;
 mod documents;
 mod models;
 mod router;

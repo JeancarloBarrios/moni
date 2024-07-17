@@ -106,7 +106,34 @@ impl VertexClient {
         self.api_get_with_params(scopes, url, None).await
     }
 
-    // DataStore Service
+    /// # Create Data Store
+    /// Creates a `DataStore` for storing documents, with the option to configure it for advanced site search.
+    /// This function constructs and sends a POST request to the Discovery Engine's DataStore creation endpoint.
+    ///
+    /// # Parameters
+    /// - `request`: A `CreateDataStoreRequest` containing:
+    ///   - `data_store`: The data store details to be created.
+    ///   - `project_id`: The project identifier.
+    ///   - `collections`: The collection associated with the data store.
+    ///   - `data_store_id`: The identifier for the data store, conforming to RFC-1034 with a 63 character limit.
+    ///   - `create_advance_site_search`: Optional boolean flag indicating whether to create an advanced data store for site search.
+    ///
+    /// # Returns
+    /// Returns an `Operation` if successful or a `VertexError` in case of an error.
+    ///
+    /// # Examples
+    /// ```
+    /// let request = CreateDataStoreRequest {
+    ///     data_store: DataStore{...},
+    ///     project_id: "project123",
+    ///     collections: "collection456",
+    ///     data_store_id: "dataStore789",
+    ///     create_advance_site_search: Some(true),
+    /// };
+    /// let operation = client.create_data_store(request).await?;
+    /// ```
+    ///
+    /// Note: The endpoint URL is built using the project ID, location ("global" by default), and collection name.
     pub async fn create_data_store(
         &self,
         request: CreateDataStoreRequest,

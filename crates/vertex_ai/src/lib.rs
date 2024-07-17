@@ -20,11 +20,11 @@ async fn token_provider() -> &'static Arc<dyn TokenProvider> {
 }
 
 #[derive(Clone)]
-pub struct Vertex {
+pub struct VertexClient {
     client: Client,
 }
 
-impl Vertex {
+impl VertexClient {
     pub async fn new() -> Result<Self, VertexError> {
         let client = Client::new();
         Ok(Self { client })
@@ -99,4 +99,6 @@ impl Vertex {
     ) -> Result<reqwest::Response, VertexError> {
         self.api_get_with_params(scopes, url, None).await
     }
+
+    // DataStore Service
 }

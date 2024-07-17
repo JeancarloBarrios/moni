@@ -1,6 +1,8 @@
 # Generated files
 /target
 
+/private 
+
 crates/agent/target
 
 # Well, this depends... See below!

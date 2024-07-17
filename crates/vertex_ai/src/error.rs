@@ -10,4 +10,10 @@ pub enum VertexError {
 
     #[error("url parsing error reason: {0}")]
     UrlParseError(String),
+
+    #[error("HTTP status error: {0}")]
+    HttpStatus(String),
+
+    #[error("JSON parsing error")]
+    ResponseJsonParsing(#[from] reqwest::Error),
 }

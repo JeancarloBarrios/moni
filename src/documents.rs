@@ -15,6 +15,13 @@ pub struct Document {
     pub id: u32,
 }
 
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct DocumentInsight {
+    pub document: Document,
+    pub insight: String,
+    pub id : u32,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DocumentMessage {
     pub from: String,            // Who sent the message (e.g., user, AI)

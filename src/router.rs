@@ -5,9 +5,9 @@ use tower_http::services::ServeDir;
 
 pub fn init_router(state: Arc<AppState>) -> Router {
     Router::new()
-        .route("/", get(routes::home))
-        .route("/documents", get(routes::get_documents))
+        .route("/", get(routes::get_documents))
         .route("/documents/:id/view", get(routes::view_document))
+        .route("/documents/:id/dialogue",get(routes::add_to_repo_dialogue_document))
         .nest_service("/static", ServeDir::new("static"))
         .with_state(state)
 }

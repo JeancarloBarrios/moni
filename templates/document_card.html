@@ -30,12 +30,17 @@
             <sl-icon slot="prefix" name="eye"></sl-icon>
             View
         </sl-button>
-        <sl-button variant="success" pill>
+        <sl-button variant="success"
+                   pill
+                   class="add-to-report-button"
+                   hx-on="click: document.querySelector('#add-insight-dialogue-{{ doc.id }}').show()"
+                   data-doc-id="{{ doc.id }}">
             <sl-icon slot="prefix" name="folder-plus"></sl-icon>
             Add To Report
         </sl-button>
     </div>
 </sl-card>
+<sl-dialog id="add-insight-dialogue-{{ doc.id }}" hx-get="/documents/{{ doc.id }}/dialogue" hx-trigger="sl-show" label="Add to Report"></sl-dialog>
 
 <style>
     .card-overview {

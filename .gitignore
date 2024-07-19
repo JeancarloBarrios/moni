@@ -2,7 +2,7 @@
 /target
 
 /private 
-
+.idea
 crates/agent/target
 
 # Well, this depends... See below!

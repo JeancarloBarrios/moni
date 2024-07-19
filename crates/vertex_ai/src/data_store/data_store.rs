@@ -1,4 +1,8 @@
-use error::Error;
+use crate::data_store::error::Error;
+use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 use crate::client::Client;
 
@@ -9,8 +13,8 @@ pub struct DataStoreClient {
 }
 
 impl DataStoreClient {
-    fn new() -> Result<Self, Error> {
-        let client = Client::new()?;
+    pub async fn new() -> Result<Self, Error> {
+        let client = Client::new().await.map_err(Error::ClientError)?;
         Ok(Self { client })
     }
 
@@ -36,7 +40,7 @@ impl DataStoreClient {
     ///     project_id: "project123",
     ///     collections: "collection456",
     ///     data_store_id: "dataStore789",
-    ///     create_advance_site_search: Some(true),
+    ///     create_sadvance_site_search: Some(true),
     /// };
     /// let operation = client.create_data_store(request).await?;
     /// ```
@@ -59,12 +63,14 @@ impl DataStoreClient {
         );
 
         let response = self
+            .client
             .api_post(&[BASE_SCOPE], url.unwrap().as_str(), request.data_store)
-            .await?
+            .await
+            .map_err(Error::ClientError)?
             .error_for_status()
-            .map_err(|e| VertexError::HttpStatus(e.to_string()))?;
+            .map_err(|e| Error::HttpStatus(e.to_string()))?;
 
-        let operation: Operation = response.json().await?;
+        let operation: Operation = response.json().await.map_err(Error::ResponseJsonParsing)?;
 
         Ok(operation)
     }

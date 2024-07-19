@@ -1,2 +1,2 @@
-mod data_store;
-mod error;
+pub mod data_store;
+pub mod error;

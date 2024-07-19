@@ -6,8 +6,6 @@ use error::Error;
 use gcp_auth::TokenProvider;
 use tokio::sync::OnceCell;
 
-const BASE_SCOPE: &str = "https://www.googleapis.com/auth/cloud-platform";
-
 static TOKEN_PROVIDER: OnceCell<Arc<dyn TokenProvider>> = OnceCell::const_new();
 
 // token_provider expect a enviorment variable called GOOGLE_APPLICATION_CREDENTIALS to be set

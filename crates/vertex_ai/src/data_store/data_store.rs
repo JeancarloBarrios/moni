@@ -74,6 +74,78 @@ impl DataStoreClient {
 
         Ok(operation)
     }
+
+    /// # Delete Data Store
+    /// Deletes a `DataStore`.
+    ///
+    /// This function constructs and sends a DELETE request to the Discovery Engine's DataStore deletion endpoint.
+    ///
+    /// # Parameters
+    /// - `request`: A `DeleteDataStoreRequest` containing:
+    ///   - `project_id`: The project identifier.
+    ///   - `collections`: The collection associated with the data store.
+    ///   - `data_store_id`: The identifier for the data store.
+    ///
+    /// # Returns
+    /// Returns an `Operation` if successful or an `Error` in case of an error.
+    ///
+    /// # HTTP Request
+    /// DELETE `https://discoveryengine.googleapis.com/v1/projects/{project}/locations/{location}/collections/{collection}/dataStores`
+    ///
+    /// The URL uses gRPC Transcoding syntax. The location is set to "global" by default.
+    ///
+    /// # Authorization Scopes
+    /// Requires the following OAuth scope:
+    /// - `https://www.googleapis.com/auth/cloud-platform`
+    ///
+    /// For more information, see the [Authentication Overview](https://cloud.google.com/docs/authentication).
+    ///
+    /// # IAM Permissions
+    /// Requires the following IAM permission on the `name` resource:
+    /// - `discoveryengine.dataStores.delete`
+    ///
+    /// For more information, see the [IAM documentation](https://cloud.google.com/iam/docs/).
+    ///
+    /// # Examples
+    /// ```
+    /// let request = DeleteDataStoreRequest {
+    ///     project_id: "project123".to_string(),
+    ///     collections: "collection456".to_string(),
+    ///     data_store_id: "dataStore789".to_string(),
+    /// };
+    /// let operation = client.delete_data_store(request).await?;
+    /// ```
+    ///
+    /// Note: Ensure that the `request` parameter is correctly formatted with the project ID, collection, and data store ID.
+    pub async fn delete_data_store(
+        &self,
+        request: DeleteDataStoreRequest,
+    ) -> Result<Operation, Error> {
+        let location = "global";
+        let url = format!(
+                "https://discoveryengine.googleapis.com/v1/projects/{}/locations/{}/collections/{}/dataStores",
+                request.project_id, location, request.collections
+            );
+        let response = self
+            .client
+            .api_delete(
+                &[BASE_SCOPE],
+                &url,
+                Some([("data_store_id", request.data_store_id.as_str())].to_vec()),
+            )
+            .await
+            .map_err(Error::ClientError)?
+            .error_for_status()
+            .map_err(|e| Error::HttpStatus(e.to_string()))?;
+        let operation: Operation = response.json().await.map_err(Error::ResponseJsonParsing)?;
+        Ok(operation)
+    }
+}
+
+pub struct DeleteDataStoreRequest {
+    pub collections: String,
+    pub project_id: String,
+    pub data_store_id: String,
 }
 
 pub struct CreateDataStoreRequest {

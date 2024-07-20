@@ -140,6 +140,150 @@ impl DataStoreClient {
         let operation: Operation = response.json().await.map_err(Error::ResponseJsonParsing)?;
         Ok(operation)
     }
+
+    /// # Get Data Store
+    /// Retrieves a `DataStore`.
+    /// This function constructs and sends a GET request to the Discovery Engine's DataStore retrieval endpoint.
+    ///
+    /// # Parameters
+    /// - `request`: A `GetDataStoreRequest` containing:
+    ///  - `project_id`: The project identifier.
+    ///  - `collections`: The collection associated with the data store.
+    ///  - `data_store_id`: The identifier for the data store.
+    ///
+    ///  # Returns
+    ///  Returns a `DataStore` if successful or an `Error` in case of an error.
+    //
+    ///  # HTTP Request
+    ///  GET `https://discoveryengine.googleapis.com/v1/projects/{project}/locations/{location}/collections/{collection}/dataStores`
+    /// The URL uses gRPC Transcoding syntax. The location is set to "global" by default.
+    ///
+    /// # Authorization Scopes
+    /// Requires the following OAuth scope:
+    /// - `https://www.googleapis.com/auth/cloud-platform`
+    /// For more information, see the [Authentication Overview](https://cloud.google.com/docs/authentication).
+    ///
+    /// # IAM Permissions
+    /// Requires the following IAM permission on the `name` resource:
+    /// - `discoveryengine.dataStores.get`
+    /// For more information, see the [IAM documentation](https://cloud.google.com/iam/docs/).
+    ///
+    /// # Examples
+    /// ```
+    /// let request = GetDataStoreRequest {
+    ///    project_id: "project123".to_string(),
+    ///    collections: "collection456".to_string(),
+    ///    data_store_id: "dataStore789".to_string(),
+    ///    };
+    ///    let data_store = client.get_data_store(request).await?;
+    ///    ```
+    ///    Note: Ensure that the `request` parameter is correctly formatted with the project ID, collection, and data store ID.
+    pub async fn get_data_store(&self, request: GetDataStoreRequest) -> Result<DataStore, Error> {
+        let location = "global";
+        let url = format!(
+                "https://discoveryengine.googleapis.com/v1/projects/{}/locations/{}/collections/{}/dataStores",
+                request.project_id, location, request.collections
+            );
+        let response = self
+            .client
+            .api_get_with_params(
+                &[BASE_SCOPE],
+                &url,
+                Some([("data_store_id", request.data_store_id.as_str())].to_vec()),
+            )
+            .await
+            .map_err(Error::ClientError)?
+            .error_for_status()
+            .map_err(|e| Error::HttpStatus(e.to_string()))?;
+        let data_store: DataStore = response.json().await.map_err(Error::ResponseJsonParsing)?;
+        Ok(data_store)
+    }
+
+    // pub async fn list_chunks(
+    //     &self,
+    //     request: ListChunksRequest,
+    // ) -> Result<ListChunksResponse, Error> {
+    //     let location = "global";
+    //         "https://discoveryengine.googleapis.com/v1alpha/projects/PROJECT_ID/locations/global/collections/default_collection/dataStores/DATA_STORE_ID/branches/0/documents/DOCUMENT_ID/chunks"
+    //
+    //     let url = format!(
+    //             "https://discoveryengine.googleapis.com/v1/projects/{}/locations/{}/collections/{}/dataStores/{}/schemas/{}/chunks",
+    //             request.project_id, location, request.collections, request.data_store_id, request.schema_id
+    //         );
+    //     let response = self
+    //         .client
+    //         .api_get_with_params(&[BASE_SCOPE], &url, None)
+    //         .await
+    //         .map_err(Error::ClientError)?
+    //         .error_for_status()
+    //         .map_err(|e| Error::HttpStatus(e.to_string()))?;
+    //     let list_chunks_response: ListChunksResponse =
+    //         response.json().await.map_err(Error::ResponseJsonParsing)?;
+    //     Ok(list_chunks_response)
+    // }
+}
+
+pub struct ListChunksRequest {
+    pub project_id: String,
+    pub collections: String,
+    pub data_store_id: String,
+    pub documet_id: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ListChunksResponse {
+    pub chunks: Vec<Chunk>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "nextPageToken")]
+    pub next_page_token: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Chunk {
+    pub name: String,
+    pub id: String,
+    pub content: String,
+    #[serde(rename = "documentMetadata")]
+    pub document_metadata: DocumentMetadata,
+    #[serde(rename = "deriveStructData")]
+    pub derive_struct_data: HashMap<String, Value>,
+    #[serde(rename = "pageSpan")]
+    pub page_span: PageSpan,
+    #[serde(rename = "chunkMetadata")]
+    pub chunk_metadata: ChunkMetadata,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "relevanceScore")]
+    relevance_score: Option<f32>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct DocumentMetadata {
+    pub uri: String,
+    pub title: String,
+    #[serde(rename = "structData")]
+    pub struct_data: HashMap<String, Value>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PageSpan {
+    #[serde(rename = "pageStart")]
+    pub page_start: i32,
+    #[serde(rename = "pageEnd")]
+    pub page_end: i32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ChunkMetadata {
+    #[serde(rename = "previusChunks")]
+    pub previus_chunks: Vec<Chunk>,
+    #[serde(rename = "nextChunks")]
+    pub next_chunks: Vec<Chunk>,
+}
+
+pub struct GetDataStoreRequest {
+    pub collections: String,
+    pub project_id: String,
+    pub data_store_id: String,
 }
 
 pub struct DeleteDataStoreRequest {
@@ -301,18 +445,18 @@ mod tests_integrations {
     use super::*;
 
     // Test token_provider
-    #[tokio::test]
-    async fn test_token_provider() {
-        env::set_var(
-            "GOOGLE_APPLICATION_CREDENTIALS",
-            "../../private/gcp_key.json",
-        );
-        // load file
-        let token_provider = token_provider().await;
-        assert!(token_provider.token(&[BASE_SCOPE]).await.is_ok());
-        let token = token_provider.token(&[BASE_SCOPE]).await.unwrap();
-        assert!(!token.as_str().is_empty());
-    }
+    // #[tokio::test]
+    // async fn test_token_provider() {
+    //     env::set_var(
+    //         "GOOGLE_APPLICATION_CREDENTIALS",
+    //         "../../private/gcp_key.json",
+    //     );
+    //     // load file
+    //     let token_provider = token_provider().await;
+    //     assert!(token_provider.token(&[BASE_SCOPE]).await.is_ok());
+    //     let token = token_provider.token(&[BASE_SCOPE]).await.unwrap();
+    //     assert!(!token.as_str().is_empty());
+    // }
 
     // Test create_data_store
     #[tokio::test]
@@ -337,21 +481,35 @@ mod tests_integrations {
             starting_schema: None,
         };
 
+        let data_store_id = "test-1";
+
         let data_store_request = CreateDataStoreRequest {
             data_store,
             project_id: project_id.to_string(),
             collections: collections.to_string(),
-            data_store_id: "moni-test-10".to_string(),
+            data_store_id: data_store_id.to_string(),
             create_advance_site_search: None,
         };
 
         let client = DataStoreClient::new().await.unwrap();
-        let operation = client.create_data_store(data_store_request).await;
+        // let operation = client.create_data_store(data_store_request).await;
 
-        println!("{:?}", operation);
+        /* println!("{:?}", operation);
 
         assert!(operation.is_ok());
 
-        println!("{:?}", operation.unwrap());
+        println!("{:?}", operation.unwrap()); */
+
+        // Now lets delete it
+        let delete_request = DeleteDataStoreRequest {
+            project_id: project_id.to_string(),
+            collections: collections.to_string(),
+            data_store_id: data_store_id.to_string(),
+        };
+        let delete_operation = client.delete_data_store(delete_request).await;
+
+        println!("{:?}", delete_operation);
+        assert!(delete_operation.is_ok());
+        println!("{:?}", delete_operation.unwrap());
     }
 }

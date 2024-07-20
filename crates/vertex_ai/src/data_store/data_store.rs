@@ -199,34 +199,74 @@ impl DataStoreClient {
         Ok(data_store)
     }
 
-    // pub async fn list_chunks(
-    //     &self,
-    //     request: ListChunksRequest,
-    // ) -> Result<ListChunksResponse, Error> {
-    //     let location = "global";
-    //         "https://discoveryengine.googleapis.com/v1alpha/projects/PROJECT_ID/locations/global/collections/default_collection/dataStores/DATA_STORE_ID/branches/0/documents/DOCUMENT_ID/chunks"
-    //
-    //     let url = format!(
-    //             "https://discoveryengine.googleapis.com/v1/projects/{}/locations/{}/collections/{}/dataStores/{}/schemas/{}/chunks",
-    //             request.project_id, location, request.collections, request.data_store_id, request.schema_id
-    //         );
-    //     let response = self
-    //         .client
-    //         .api_get_with_params(&[BASE_SCOPE], &url, None)
-    //         .await
-    //         .map_err(Error::ClientError)?
-    //         .error_for_status()
-    //         .map_err(|e| Error::HttpStatus(e.to_string()))?;
-    //     let list_chunks_response: ListChunksResponse =
-    //         response.json().await.map_err(Error::ResponseJsonParsing)?;
-    //     Ok(list_chunks_response)
-    // }
+    /// # List Chunks
+    /// Lists the chunks in a document.
+    /// This function constructs and sends a GET request to the Discovery Engine's chunk listing endpoint.
+    ///
+    /// # Parameters
+    /// - `request`: A `ListChunksRequest` containing:
+    ///  - `project_id`: The project identifier.
+    ///  - `collections`: The collection associated with the data store.
+    ///  - `data_store_id`: The identifier for the data store.
+    ///  - `branch`: The branch identifier.
+    ///  - `documet_id`: The document identifier.
+    ///
+    ///  # Returns
+    ///  Returns a `ListChunksResponse` if successful or an `Error` in case of an error.
+    ///
+    ///  # HTTP Request
+    ///  GET `https://discoveryengine.googleapis.com/v1/projects/{project}/locations/{location}/collections/{collection}/dataStores/{dataStore}/branches/{branch}/documents/{document}/chunks`
+    ///  The URL uses gRPC Transcoding syntax. The location is set to "global" by default.
+    ///  # Authorization Scopes
+    ///  Requires the following OAuth scope:
+    ///  - `https://www.googleapis.com/auth/cloud-platform`
+    ///  For more information, see the [Authentication Overview](https://cloud.google.com/docs/authentication).
+    ///
+    ///  # IAM Permissions
+    ///  Requires the following IAM permission on the `name` resource:
+    ///  - `discoveryengine.dataStores.chunks.list`
+    ///  For more information, see the [IAM documentation](https://cloud.google.com/iam/docs/).
+    ///
+    ///  # Examples
+    ///  ```
+    ///  let request = ListChunksRequest {
+    ///  project_id: "project123".to_string(),
+    ///  collections: "collection456".to_string(),
+    ///  data_store_id: "dataStore789".to_string(),
+    ///  branch: "branch123".to_string(),
+    ///  documet_id: "document123".to_string(),
+    ///  };
+    ///  let chunks = client.list_chunks(request).await?;
+    ///  ```
+    ///  Note: Ensure that the `request` parameter is correctly formatted with the project ID, collection, data store ID, branch, and document ID.
+    pub async fn list_chunks(
+        &self,
+        request: ListChunksRequest,
+    ) -> Result<ListChunksResponse, Error> {
+        let location = "global";
+
+        let url = format!(
+            "https://discoveryengine.googleapis.com/v1alpha/projects/{}/locations/{}/collections/{}/dataStores/{}/branches/{}/documents/{}/chunks",
+            request.project_id, location, request.collections, request.data_store_id, request.branch, request.documet_id
+        );
+        let response = self
+            .client
+            .api_get_with_params(&[BASE_SCOPE], &url, None)
+            .await
+            .map_err(Error::ClientError)?
+            .error_for_status()
+            .map_err(|e| Error::HttpStatus(e.to_string()))?;
+        let list_chunks_response: ListChunksResponse =
+            response.json().await.map_err(Error::ResponseJsonParsing)?;
+        Ok(list_chunks_response)
+    }
 }
 
 pub struct ListChunksRequest {
     pub project_id: String,
     pub collections: String,
     pub data_store_id: String,
+    pub branch: String,
     pub documet_id: String,
 }
 

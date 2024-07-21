@@ -31,6 +31,27 @@ pub struct DocumentMessage {
     pub document_id: u32, // Specific part of the document being referenced (optional)
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Report {
+    pub date: String,            // Date and time of the message
+    pub title: String,
+    pub id: u32,                 // Unique identifier for the message
+    pub content: String,         // The actual content of the message
+    pub template: String // A markdown template for the report
+}
+impl Report {
+    // This is a dummy function to generate the report.
+    // The idea is that we give a report + vector of insights and it will generate a report content.
+    // Using the report.template + Gemini SDK.
+    pub fn generate_report(&self, insights: Vec<DocumentInsight>) -> String {
+        // Start with the report title and content
+        let mut report_content = format!("# {}\n\n", self.title);
+        for insight in insights {
+            report_content = report_content + &format!("{}\n", insight.insight);
+        }
+        report_content
+    }
+}
 
 const DOCS_TEST_PATH: &str = "./test-data/testdata.json";
 

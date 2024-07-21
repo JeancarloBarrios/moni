@@ -2,7 +2,7 @@ use askama_axum::IntoResponse;
 use axum::extract::Path as AxumPath;
 use chrono::prelude::*;
 use crate::templates;
-use crate::templates::{DocumentDetailsTemplate, DocumentsTemplate, AddToReportDialogueTemplate};
+use crate::templates::{DocumentDetailsTemplate, DocumentsTemplate, AddToReportDialogueTemplate, InsightReportPage};
 
 use crate::documents::read_documents;
 pub async fn home() -> impl IntoResponse {
@@ -20,11 +20,11 @@ fn current_timestamp() -> String {
     Utc::now().to_rfc3339()
 }
 
-pub async fn add_to_repo_dialogue_document(AxumPath(id): AxumPath<u64>) -> impl IntoResponse {
+pub async fn add_to_repo_dialogue_document() -> impl IntoResponse {
     let dummy_document = crate::documents::Document {
         url: "https://pdfobject.com/pdf/sample.pdf".to_string(),
         title: "Example Document".to_string(),
-        id: id as u32,
+        id: 123,
     };
     let insights = r#"
         ## Insights
@@ -110,6 +110,51 @@ pub async fn view_document(AxumPath(id): AxumPath<u64>) -> impl IntoResponse {
     ];
 
     let template = DocumentDetailsTemplate { document: dummy_document, document_chat: chat};
+    // HtmlTemplate(template)
+    template
+}
+
+pub async fn insight_report_page() -> impl IntoResponse {
+    let insights = vec![
+        crate::documents::DocumentInsight {
+            document: crate::documents::Document {
+                url: "https://pdfobject.com/pdf/sample.pdf".to_string(),
+                title: "Example Document".to_string(),
+                id: 101,
+            },
+            insight: "The world is round.".to_string(),
+            id: 1,
+        },
+        crate::documents::DocumentInsight {
+            document: crate::documents::Document {
+                url: "https://pdfobject.com/pdf/sample.pdf".to_string(),
+                title: "Example Document".to_string(),
+                id: 102,
+            },
+            insight: "The world is flat.".to_string(),
+            id: 2,
+        },
+        crate::documents::DocumentInsight {
+            document: crate::documents::Document {
+                url: "https://pdfobject.com/pdf/sample.pdf".to_string(),
+                title: "Example Document".to_string(),
+                id: 103,
+            },
+            insight: "The world is a donut.".to_string(),
+            id: 3,
+        },
+    ];
+
+    let template = InsightReportPage {
+        insights: insights,
+        report: crate::documents::Report {
+            id: 1,
+            content: "This is a report on the insights gathered from various documents.".to_string(),
+            template: " This is the template to provide LLM for report generation".to_string(),
+            title: "Insights Report".to_string(),
+            date: current_timestamp(),
+        }
+    };
     // HtmlTemplate(template)
     template
 }

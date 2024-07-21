@@ -8,6 +8,7 @@ pub fn init_router(state: Arc<AppState>) -> Router {
         .route("/", get(routes::get_documents))
         .route("/documents/:id/view", get(routes::view_document))
         .route("/documents/:id/dialogue",get(routes::add_to_repo_dialogue_document))
+        .route("/report-template",get(routes::insight_report_page))
         .nest_service("/static", ServeDir::new("static"))
         .with_state(state)
 }

@@ -3,8 +3,8 @@ pub enum Error {
     #[error("client error")]
     ClientError(crate::client::error::Error),
 
-    #[error("HTTP status error: {0}")]
-    HttpStatus(String),
+    #[error("HTTP status error")]
+    HttpStatus(reqwest::Error),
 
     #[error("some random datastore error")]
     DataStoreError,

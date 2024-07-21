@@ -68,7 +68,7 @@ impl DataStoreClient {
             .await
             .map_err(Error::ClientError)?
             .error_for_status()
-            .map_err(|e| Error::HttpStatus(e.to_string()))?;
+            .map_err(Error::HttpStatus)?;
 
         let operation: Operation = response.json().await.map_err(Error::ResponseJsonParsing)?;
 
@@ -136,7 +136,7 @@ impl DataStoreClient {
             .await
             .map_err(Error::ClientError)?
             .error_for_status()
-            .map_err(|e| Error::HttpStatus(e.to_string()))?;
+            .map_err(Error::HttpStatus)?;
         let operation: Operation = response.json().await.map_err(Error::ResponseJsonParsing)?;
         Ok(operation)
     }
@@ -194,7 +194,7 @@ impl DataStoreClient {
             .await
             .map_err(Error::ClientError)?
             .error_for_status()
-            .map_err(|e| Error::HttpStatus(e.to_string()))?;
+            .map_err(Error::HttpStatus)?;
         let data_store: DataStore = response.json().await.map_err(Error::ResponseJsonParsing)?;
         Ok(data_store)
     }
@@ -255,7 +255,7 @@ impl DataStoreClient {
             .await
             .map_err(Error::ClientError)?
             .error_for_status()
-            .map_err(|e| Error::HttpStatus(e.to_string()))?;
+            .map_err(Error::HttpStatus)?;
         let list_chunks_response: ListChunksResponse =
             response.json().await.map_err(Error::ResponseJsonParsing)?;
         Ok(list_chunks_response)

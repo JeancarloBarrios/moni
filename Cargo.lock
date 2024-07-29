@@ -1320,7 +1320,6 @@ dependencies = [
  "askama",
  "askama_axum",
  "axum",
- "chrono",
  "config",
  "firebase-rs",
  "serde",

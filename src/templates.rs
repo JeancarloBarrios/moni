@@ -2,7 +2,7 @@ use crate::documents::Document;
 use askama::Template;
 use axum::http::StatusCode;
 use axum::response::{Html, IntoResponse, Response};
-use crate::documents::{Document, DocumentInsight, DocumentMessage, Report};
+use crate::documents::{DocumentInsight, DocumentMessage, Report};
 
 #[derive(Template)]
 #[template(path = "index.html")]

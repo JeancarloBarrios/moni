@@ -1,0 +1,51 @@
+<div id="insights-container" class="insights-container">
+    <md-block id="insights-block" class="md-block htmx-indicator">
+        ## Insights
+        * **Insight 1**: The world is round.
+        * **Insight 2**: The world is flat.
+        * **Insight 3**: The world is a donut.
+    </md-block>
+    <sl-spinner id="loader" style="font-size: 50px; --track-width: 10px;" class="loader htmx-indicator"></sl-spinner>
+</div>
+
+<form hx-put="/insights/{{ insight.id }}"
+      hx-trigger="submit"
+      hx-target="#insights-block"
+      hx-indicator=".htmx-indicator"
+      hx-swap="innerHTML"
+      hx-include="#insights-input"
+      id="insights-form">
+    <div style="display: flex; align-content: center; justify-content: end">
+        <sl-input id="insights-input" name="prompt" help-text="Do you want to add or modify the insights?" required></sl-input>
+        <sl-button type="submit"
+                   variant="primary"
+                   id="send-button"
+                   hx-disable="true">
+            Send
+        </sl-button>
+    </div>
+</form>
+
+<sl-button slot="footer" variant="success" id="addDialogButton">Add</sl-button>
+<sl-button slot="footer" variant="primary" id="closeDialogButton">Close</sl-button>
+
+<style>
+    .loader{
+        align-content: center;
+        justify-content: center;
+        margin: auto;
+    }
+    .insights-container  {
+        min-height: 300px;
+        border: solid 2px var(--sl-color-neutral-200);
+        padding: 0 1rem;
+        display: flex;
+        flex-direction: column;
+    }
+    .md-block.htmx-indicator.htmx-request {
+        display: none;
+    }
+    .md-block.htmx-indicator{
+        opacity: 1;
+    }
+</style>

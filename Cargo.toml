@@ -28,12 +28,15 @@ uuid = { version = "1.9.1", features = ["v7"] }
 lopdf = { version = "0.32.0", features = ["pom", "pom_parser"] }
 unicode-segmentation = "1.9.0"
 infer = { version = "0.3"}
+reqwest = { version = "0.12", features = ["json"] }
+gcp_auth = "0.12.2"
 
 [dependencies]
 anyhow.workspace = true
 askama = { workspace = true, features = ["with-axum"] }
 askama_axum.workspace = true
 axum.workspace = true
+chrono = "0.4.38"
 config.workspace = true
 firebase-rs.workspace = true
 serde = { workspace = true, features = ["derive"] }

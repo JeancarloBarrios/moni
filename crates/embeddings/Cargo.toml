@@ -8,4 +8,3 @@ lopdf = { workspace = true, features = ["pom", "pom_parser"] }
 thiserror = { workspace = true}
 unicode-segmentation = { workspace = true}
 infer = { workspace = true}
-

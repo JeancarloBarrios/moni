@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}{{ document.title }}{% endblock %}
+
+{% block content %}
+<div class="document-header">
+    <h1>{{ document.title }}</h1>
+    <div class="document-actions">
+        <sl-button variant="primary" pill hx-boost="true" onclick="window.location.href='/document/{{ document.id }}/view'">
+            <sl-icon slot="prefix" name="eye"></sl-icon>
+            View
+        </sl-button>
+        <sl-button variant="success" pill>
+            <sl-icon slot="prefix" name="folder-plus"></sl-icon>
+            Add To Report
+        </sl-button>
+    </div>
+</div>
+
+<div class="container">
+    <div class="pdf-viewer">
+        <!-- PDF viewer embed code -->
+        <embed src="{{ document.url }}" type="application/pdf" width="100%" height="100%">
+    </div>
+    <div class="chat">
+        <!-- Chat interface code -->
+        <div class="chat-messages">
+            {% for message in document_chat %}
+            <div class="chat-message">
+                <strong>{{ message.from }}:</strong> {{ message.content }}
+                <span class="chat-date">{{ message.date }}</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <form hx-post="/ask-ai/{{ document.id }}" hx-trigger="submit" hx-swap="outerHTML">
+            <div class="question-container"  >
+                <sl-input name="question"></sl-input>
+                <sl-button type="submit" variant="primary">Ask</sl-button>
+            </div>
+            <div style="display: flex; justify-content: flex-end;">
+
+                <sl-button type="submit" variant="success">
+                    <sl-icon slot="prefix" name="folder-plus"></sl-icon>
+                    Add Insights to Report
+                </sl-button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .question-container {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+    }
+
+    .question-container sl-input {
+        flex: 1;
+        margin-right: 10px;
+    }
+    .document-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 20px;
+        background-color: var(--sl-color-neutral-100);
+        border-bottom: 1px solid #ccc;
+    }
+
+    .document-actions sl-button {
+        margin-left: 10px;
+    }
+
+    .container {
+        display: flex;
+        height: calc(100vh - 60px); /* Adjust for the height of the navbar */
+    }
+
+    .pdf-viewer {
+        flex: 4;
+        padding: 20px 20px 0 0;
+        border-right: 1px solid #ccc;
+    }
+
+    .chat {
+        flex: 1;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        margin-bottom: 20px;
+    }
+
+    .chat-message {
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+    }
+
+    .chat-message.user {
+        background-color: #e7f3ff;
+    }
+
+    .chat-message.ai {
+        background-color: #f0f0f0;
+    }
+
+    .chat-message .chat-date {
+        display: block;
+        font-size: 0.8em;
+        color: #666;
+    }
+
+    .chat form {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat form sl-input {
+        margin-bottom: 10px;
+    }
+
+    .chat form sl-button {
+        align-self: flex-start;
+    }
+</style>
+{% endblock %}

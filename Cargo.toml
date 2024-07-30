@@ -36,6 +36,7 @@ anyhow.workspace = true
 askama = { workspace = true, features = ["with-axum"] }
 askama_axum.workspace = true
 axum.workspace = true
+chrono = "0.4.38"
 config.workspace = true
 firebase-rs.workspace = true
 serde = { workspace = true, features = ["derive"] }

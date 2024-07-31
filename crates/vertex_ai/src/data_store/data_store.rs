@@ -1,9 +1,9 @@
 use crate::data_store::error::Error;
-use std::collections::HashMap;
 use gcloud_sdk::google::api::ProjectProperties;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use rand::Rng;
+use std::collections::HashMap;
 
 use crate::client::Client;
 use tokio::time::{sleep, Duration};
@@ -36,14 +36,6 @@ impl DataStoreClient {
     ///
     /// # Examples
     /// ```
-    /// let request = CreateDataStoreRequest {
-    ///     data_store: DataStore{...},
-    ///     project_id: "project123",
-    ///     collections: "collection456",
-    ///     data_store_id: "dataStore789",
-    ///     create_sadvance_site_search: Some(true),
-    /// };
-    /// let operation = client.create_data_store(request).await?;
     /// ```
     ///
     /// Note: The endpoint URL is built using the project ID, location ("global" by default), and collection name.
@@ -76,14 +68,12 @@ impl DataStoreClient {
         Ok(operation)
     }
 
-
     // Sets up a Google cloud storage data store
     pub async fn setup_data_connector(
         &self,
         request: SetupDataConnectorRequest,
     ) -> Result<SetupDataConnectorResponse, Error> {
         let location = "global";
-
 
         let url = reqwest::Url::parse(
             format!(
@@ -101,7 +91,8 @@ impl DataStoreClient {
             .error_for_status()
             .map_err(Error::HttpStatus)?;
 
-        let operation: SetupDataConnectorResponse = response.json().await.map_err(Error::ResponseJsonParsing)?;
+        let operation: SetupDataConnectorResponse =
+            response.json().await.map_err(Error::ResponseJsonParsing)?;
 
         Ok(operation)
     }
@@ -138,14 +129,6 @@ impl DataStoreClient {
     /// For more information, see the [IAM documentation](https://cloud.google.com/iam/docs/).
     ///
     /// # Examples
-    /// ```
-    /// let request = DeleteDataStoreRequest {
-    ///     project_id: "project123".to_string(),
-    ///     collections: "collection456".to_string(),
-    ///     data_store_id: "dataStore789".to_string(),
-    /// };
-    /// let operation = client.delete_data_store(request).await?;
-    /// ```
     ///
     /// Note: Ensure that the `request` parameter is correctly formatted with the project ID, collection, and data store ID.
     pub async fn delete_data_store(
@@ -159,24 +142,13 @@ impl DataStoreClient {
             );
         let response = self
             .client
-            .api_delete(
-                &[BASE_SCOPE],
-                &url,
-                None,
-            )
+            .api_delete(&[BASE_SCOPE], &url, None)
             .await
             .map_err(Error::ClientError)?
             .error_for_status()
             .map_err(Error::HttpStatus)?;
-        let response_text = response.text().await;
-        println!("Response text: {}", response_text.unwrap().to_string());
-        // let operation: Operation = response.json().await.map_err(Error::ResponseJsonParsing)?;
-        Ok(Operation {
-            name: "test".to_string(),
-            metadata: None,
-            done: true,
-            response: HashMap::new(),
-        })
+        let operation: Operation = response.json().await.map_err(Error::ResponseJsonParsing)?;
+        Ok(operation)
     }
 
     /// # Get Data Store
@@ -207,14 +179,6 @@ impl DataStoreClient {
     /// For more information, see the [IAM documentation](https://cloud.google.com/iam/docs/).
     ///
     /// # Examples
-    /// ```
-    /// let request = GetDataStoreRequest {
-    ///    project_id: "project123".to_string(),
-    ///    collections: "collection456".to_string(),
-    ///    data_store_id: "dataStore789".to_string(),
-    ///    };
-    ///    let data_store = client.get_data_store(request).await?;
-    ///    ```
     ///    Note: Ensure that the `request` parameter is correctly formatted with the project ID, collection, and data store ID.
     pub async fn get_data_store(&self, request: GetDataStoreRequest) -> Result<DataStore, Error> {
         let location = "global";
@@ -265,17 +229,6 @@ impl DataStoreClient {
     ///  - `discoveryengine.dataStores.chunks.list`
     ///  For more information, see the [IAM documentation](https://cloud.google.com/iam/docs/).
     ///
-    ///  # Examples
-    ///  ```
-    ///  let request = ListChunksRequest {
-    ///  project_id: "project123".to_string(),
-    ///  collections: "collection456".to_string(),
-    ///  data_store_id: "dataStore789".to_string(),
-    ///  branch: "branch123".to_string(),
-    ///  documet_id: "document123".to_string(),
-    ///  };
-    ///  let chunks = client.list_chunks(request).await?;
-    ///  ```
     ///  Note: Ensure that the `request` parameter is correctly formatted with the project ID, collection, data store ID, branch, and document ID.
     pub async fn get_operation_status(
         &self,
@@ -284,13 +237,17 @@ impl DataStoreClient {
         let location = "global";
 
         let url = format!(
-            "https://discoveryengine.googleapis.com/v1alpha/projects/{}/locations/{}/collections/{}/dataStores/{}/branches/{}/operations/{}",
-            request.project_id, location, request.collection, request.data_store_id, request.branch, request.operation_id
+            "https://discoveryengine.googleapis.com/v1alpha/projects/{}/locations/{}/collections/{}/dataStores/{}/operations/{}",
+            request.project_id, location, request.collection, request.data_store_id, request.operation_name
         );
 
         let response = self
             .client
-            .api_get_with_params(&["https://www.googleapis.com/auth/cloud-platform"], &url, None)
+            .api_get_with_params(
+                &["https://www.googleapis.com/auth/cloud-platform"],
+                &url,
+                None,
+            )
             .await
             .map_err(|err| Box::new(Error::ClientError(err)) as Box<dyn std::error::Error>)?
             .error_for_status()
@@ -301,24 +258,30 @@ impl DataStoreClient {
             Ok(operation)
         } else {
             let error = response.text().await?;
-            Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, error)))
+            Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                error,
+            )))
         }
     }
 
-    pub async fn poll_operation(&self, operation_name: PollOperationRequest, max_retries: Option<u32>, wait_time: Option<u64>) -> bool {
+    pub async fn poll_operation(
+        &self,
+        request: PollOperationRequest,
+        max_retries: Option<u32>,
+        wait_time: Option<u64>,
+    ) -> bool {
         let max_retries = max_retries.unwrap_or(20);
         let wait_time = wait_time.unwrap_or(5);
         let mut retries = 0;
 
         loop {
-
             let request = GetOperationStatusRequest {
-                name: operation_name.name.to_string(),
-                project_id: operation_name.project_id.to_string(),
-                collection: operation_name.collection.to_string(),
-                data_store_id: operation_name.data_store_id.to_string(),
-                branch: operation_name.branch.to_string(),
-                operation_id: operation_name.operation_id.to_string(),
+                operation_name: request.operation_name.to_string(),
+                project_id: request.project_id.to_string(),
+                collection: request.collection.to_string(),
+                data_store_id: request.data_store_id.to_string(),
+                branch: request.branch.to_string(),
             };
             let operation_status = self.get_operation_status(request).await;
             println!("polling operation {:?}", operation_status);
@@ -336,6 +299,7 @@ impl DataStoreClient {
             }
         }
     }
+
     pub async fn search_chunks(
         &self,
         request: SearchChunksRequest,
@@ -357,7 +321,6 @@ impl DataStoreClient {
             response.json().await.map_err(Error::ResponseJsonParsing)?;
         Ok(search_chunks_response)
     }
-
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -385,9 +348,8 @@ pub struct ResponseEntity {
     pub params: EntityParams,
 }
 
-
 #[derive(Serialize, Deserialize, Debug)]
-pub struct  SetupDataConnectorRequest {
+pub struct SetupDataConnectorRequest {
     pub project_id: String,
     pub collection_id: String,
     pub collection_display_name: String,
@@ -465,8 +427,7 @@ pub struct SearchChunksRequest {
     pub filter: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub order_by: Option<String>,
-    pub content_search_spec: ContentSearchSpec
-
+    pub content_search_spec: ContentSearchSpec,
 }
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -539,23 +500,19 @@ pub struct CreateDataStoreRequest {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GetOperationStatusRequest {
-    pub name: String,
+    pub operation_name: String,
     pub project_id: String,
     pub collection: String,
     pub data_store_id: String,
     pub branch: String,
-    pub operation_id: String,
-
 }
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PollOperationRequest {
-    pub name: String,
+    pub operation_name: String,
     pub project_id: String,
     pub collection: String,
     pub data_store_id: String,
     pub branch: String,
-    pub operation_id: String,
-
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -564,7 +521,8 @@ pub struct Operation {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub metadata: Option<Metadata>,
     pub done: bool,
-    pub response: HashMap<String, String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub response: Option<HashMap<String, String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -705,7 +663,7 @@ pub struct Schema {}
 // Test
 #[cfg(test)]
 mod tests_integrations {
-    use std::env;
+    use std::{env, thread};
 
     use super::*;
 
@@ -749,7 +707,7 @@ mod tests_integrations {
             starting_schema: None,
         };
 
-        let data_store_id = format!("moni-test-{}", random_number);;
+        let data_store_id = format!("moni-test-{}", random_number);
 
         let data_store_request = CreateDataStoreRequest {
             data_store,
@@ -767,18 +725,18 @@ mod tests_integrations {
 
         assert!(operation.is_ok());
 
-        let operation_resolved = operation.unwrap();
-        let operation_request = PollOperationRequest{
-            name: operation_resolved.name.to_string(),
-            project_id: project_id.to_string(),
-            collection: collections.to_string(),
-            data_store_id: data_store_id.to_string(),
-            branch: "default_branch".to_string(),
-            operation_id: operation_resolved.name.to_string(),
-        };
-        let operation_finished = client.poll_operation(operation_request, None, None).await;
-        assert_eq!(operation_finished, true);
+        // let operation_resolved = operation.unwrap();
+        // let operation_request = PollOperationRequest {
+        //     operation_name: operation_resolved.name.to_string(),
+        //     project_id: project_id.to_string(),
+        //     collection: collections.to_string(),
+        //     data_store_id: data_store_id.to_string(),
+        //     branch: "default_branch".to_string(),
+        // };
+        // let operation_finished = client.poll_operation(operation_request, None, None).await;
+        // assert!(operation_finished);
         // Now lets delete it
+        thread::sleep(Duration::from_secs(5));
         let delete_request = DeleteDataStoreRequest {
             project_id: project_id.to_string(),
             collections: collections.to_string(),

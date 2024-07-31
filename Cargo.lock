@@ -3406,6 +3406,7 @@ version = "0.1.0"
 dependencies = [
  "gcloud-sdk",
  "gcp_auth",
+ "rand",
  "reqwest 0.12.5",
  "serde",
  "serde_derive",

@@ -11,4 +11,7 @@ pub enum Error {
 
     #[error("JSON parsing error")]
     ResponseJsonParsing(#[from] reqwest::Error),
+
+    #[error("Text response error")]
+    ResponseTextRetrieval(reqwest::Error),
 }

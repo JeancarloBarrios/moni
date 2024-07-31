@@ -14,4 +14,5 @@ serde_derive = { workspace = true}
 serde_json = { workspace = true}
 
 gcloud-sdk = { version = "0.25", features = ["google-cloud"] }
+rand = "0.8.5"
 

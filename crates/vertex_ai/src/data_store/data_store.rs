@@ -1,9 +1,7 @@
 use crate::data_store::error::Error;
-use gcloud_sdk::google::api::ProjectProperties;
-use rand::Rng;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::HashMap;
+use std::{collections::HashMap, string};
 
 use crate::client::Client;
 use tokio::time::{sleep, Duration};
@@ -324,6 +322,177 @@ impl DataStoreClient {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct SearchRequest {
+    pub branch: String,
+    pub query: String,
+    pub image_bytes: ImageQuery,
+    pub page_size: u32,
+    pub page_token: String,
+    pub offset: u32,
+    pub data_store_specs: Vec<DataStoreSpec>,
+    pub filter: String,
+    pub canonical_filter: String,
+    pub order_by: String,
+    pub user_info: UserInfo,
+    pub language_code: String,
+    pub region_code: String,
+    pub facet_specs: Vec<FacetSpec>,
+    pub boost_spec: BoostSpec,
+    pub query_expansion_spec: QueryExpansionSpec,
+    pub spell_correction_spec: SpellCorrectionSpec,
+    pub content_serach_spec: ContentSearchSpec,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ContentSearchSpec {
+    pub snippet_spec: Option<SnippetSpec>,
+    pub chunk_spec: Option<ChunkSpec>,
+    pub extractive_content_spec: Option<ExtractiveContentSpec>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ExtractiveContentSpec {
+    pub max_extractive_answer_count: i32,
+    pub max_extractive_segment_count: i32,
+    pub return_extractive_segment_score: bool,
+    pub num_previus_segments: i32,
+    pub num_next_segments: i32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct SnippetSpec {
+    pub max_snippet_count: i32,
+    pub reference_only: bool,
+    pub return_snippet: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct SpellCorrectionSpec {
+    pub mode: Mode,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum Mode {
+    ModeUnspecified,
+    SugestionOnly,
+    Auto,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct BoostSpec {
+    pub condition_boost_specs: Vec<ConditionBoostSpec>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ConditionBoostSpec {
+    pub condition: String,
+    pub boost: i32,
+    pub boost_control_spec: BoostControlSpec,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct BoostControlSpec {
+    pub field_name: String,
+    pub attribute_type: AttributeType,
+    pub interpolation_types: InterpolationType,
+    pub control_point: Vec<ControlPoint>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ControlPoint {
+    pub attribute_value: String,
+    pub boost_amount: i32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum AttributeType {
+    AttributeTypeUnspecified,
+    Numerical,
+    Freshness,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum InterpolationType {
+    InterpolationTypeUnspecified,
+    Linear,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ImageQuery {
+    pub image_bytes: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct DataStoreSpec {
+    pub data_store: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct UserInfo {
+    pub user_id: String,
+    pub user_agent: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct FacetSpec {
+    pub facet_key: FacetKey,
+    pub limit: i32,
+    pub excluded_filter_keys: Vec<String>,
+    pub enable_dynamic_position: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct FacetKey {
+    pub key: String,
+    pub interval: Vec<Interval>,
+    pub restricted_values: Vec<String>,
+    pub prefixes: Vec<String>,
+    pub contains: Vec<String>,
+    pub case_insensitve: bool,
+    pub order_by: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Interval {
+    pub minimum: i32,
+    pub exclusive_minimum: i32,
+    pub maximum: i32,
+    pub exclusive_maximum: i32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct QueryExpansionSpec {
+    pub condition: Condition,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum Condition {
+    ConditionUnspecified,
+    Disabled,
+    Auto,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SetupDataConnectorResponse {
     pub name: String,
     pub response: ResponseDataConnector,
@@ -404,10 +573,6 @@ pub struct ListChunksResponse {
 pub struct ChunkSpec {
     pub num_previous_chunks: Option<i32>,
     pub num_next_chunks: Option<i32>,
-}
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ContentSearchSpec {
-    pub chunk_spec: Option<ChunkSpec>,
 }
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -663,9 +828,9 @@ pub struct Schema {}
 // Test
 #[cfg(test)]
 mod tests_integrations {
-    use std::{env, thread};
-
     use super::*;
+    use rand::{self, Rng};
+    use std::{env, thread};
 
     // Test token_provider
     // #[tokio::test]

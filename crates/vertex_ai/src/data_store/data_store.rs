@@ -1,7 +1,7 @@
 use crate::data_store::error::Error;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{collections::HashMap, string};
+use std::{collections::HashMap, default, string};
 
 use crate::client::Client;
 use tokio::time::{sleep, Duration};
@@ -319,11 +319,89 @@ impl DataStoreClient {
             response.json().await.map_err(Error::ResponseJsonParsing)?;
         Ok(search_chunks_response)
     }
+
+    pub async fn search(&self, request: SearchRequest) -> Result<SearchResponse, Error> {
+        let location = "global";
+        let data_store = "moni-demo_1722720098936";
+        let url = format!("https://discoveryengine.googleapis.com/v1alpha/projects/{}/locations/{}/collections/default_collection/dataStores/{}/servingconfigs/default_search:search", request.project_id, location, data_store);
+        let response = self
+            .client
+            .api_post(&[BASE_SCOPE], &url, request.discovery_engine_search_request)
+            .await
+            .map_err(Error::ClientError)?
+            .error_for_status()
+            .map_err(Error::HttpStatus)?;
+        let search_response: SearchResponse =
+            response.json().await.map_err(Error::ResponseJsonParsing)?;
+        Ok(search_response)
+    }
+}
+
+pub struct SearchRequest {
+    pub project_id: String,
+    pub discovery_engine_search_request: DiscoveryEngineSearchRequest,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct SearchRequest {
+pub struct SearchResponse {
+    results: Vec<ResultItem>,
+    total_size: u32,
+    attribution_token: String,
+    guided_search_result: serde_json::Value,
+    summary: serde_json::Value,
+    session_info: SessionInfo,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct ResultItem {
+    id: String,
+    document: Document,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct Document {
+    name: String,
+    id: String,
+    derived_struct_data: DerivedStructData,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct DerivedStructData {
+    snippets: Vec<Snippet>,
+    link: String,
+    title: String,
+    extractive_answers: Vec<ExtractiveAnswer>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct Snippet {
+    snippet_status: String,
+    snippet: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct ExtractiveAnswer {
+    page_number: String,
+    content: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct SessionInfo {
+    name: String,
+    query_id: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct DiscoveryEngineSearchRequest {
+    pub session: String,
     pub branch: String,
     pub query: String,
     pub image_bytes: ImageQuery,
@@ -344,25 +422,33 @@ pub struct SearchRequest {
     pub content_serach_spec: ContentSearchSpec,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct ContentSearchSpec {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub snippet_spec: Option<SnippetSpec>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub chunk_spec: Option<ChunkSpec>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub extractive_content_spec: Option<ExtractiveContentSpec>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct ExtractiveContentSpec {
-    pub max_extractive_answer_count: i32,
-    pub max_extractive_segment_count: i32,
-    pub return_extractive_segment_score: bool,
-    pub num_previus_segments: i32,
-    pub num_next_segments: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_extractive_answer_count: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_extractive_segment_count: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub return_extractive_segment_score: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub num_previus_segments: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub num_next_segments: Option<i32>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct SnippetSpec {
     pub max_snippet_count: i32,
@@ -370,21 +456,22 @@ pub struct SnippetSpec {
     pub return_snippet: bool,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct SpellCorrectionSpec {
     pub mode: Mode,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum Mode {
     ModeUnspecified,
     SugestionOnly,
+    #[default]
     Auto,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct BoostSpec {
     pub condition_boost_specs: Vec<ConditionBoostSpec>,
@@ -429,7 +516,7 @@ pub enum InterpolationType {
     Linear,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct ImageQuery {
     pub image_bytes: String,
@@ -441,7 +528,7 @@ pub struct DataStoreSpec {
     pub data_store: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct UserInfo {
     pub user_id: String,
@@ -478,17 +565,18 @@ pub struct Interval {
     pub exclusive_maximum: i32,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct QueryExpansionSpec {
     pub condition: Condition,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum Condition {
     ConditionUnspecified,
     Disabled,
+    #[default]
     Auto,
 }
 
@@ -828,6 +916,8 @@ pub struct Schema {}
 // Test
 #[cfg(test)]
 mod tests_integrations {
+    use crate::client;
+
     use super::*;
     use rand::{self, Rng};
     use std::{env, thread};
@@ -912,6 +1002,51 @@ mod tests_integrations {
         println!("{:?}", delete_operation);
         assert!(delete_operation.is_ok());
         println!("{:?}", delete_operation.unwrap());
+    }
+
+    #[tokio::test]
+    async fn test_search_document() {
+        env::set_var(
+            "GOOGLE_APPLICATION_CREDENTIALS",
+            "../../private/gcp_key.json",
+        );
+        let project_id = "moni-429523";
+        let collections = "default_collection";
+        let data_store_id = "moni-demo_1722720098936";
+
+        let request = SearchRequest {
+            project_id: project_id.to_string(),
+            discovery_engine_search_request: DiscoveryEngineSearchRequest {
+                query: "Can you show all document that a relevant for Colombian Climate adaptation"
+                    .to_string(),
+                page_size: 10,
+                filter: "".to_string(),
+                query_expansion_spec: QueryExpansionSpec {
+                    condition: Condition::Auto,
+                },
+                spell_correction_spec: SpellCorrectionSpec { mode: Mode::Auto },
+                content_serach_spec: ContentSearchSpec {
+                    extractive_content_spec: Some(ExtractiveContentSpec {
+                        max_extractive_segment_count: Some(1),
+                        ..Default::default()
+                    }),
+                    snippet_spec: Some(SnippetSpec {
+                        max_snippet_count: 1,
+                        return_snippet: true,
+                        ..Default::default()
+                    }),
+                    chunk_spec: None,
+                },
+                ..Default::default()
+            },
+        };
+
+        let client = DataStoreClient::new().await.unwrap();
+        let response = client.search(request).await;
+        println!("{:?}", response);
+        assert!(response.is_ok());
+        let search_response = response.unwrap();
+        println!("{:?}", search_response);
     }
 
     // Test create_data_store with a storage bucket.

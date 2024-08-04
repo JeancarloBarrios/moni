@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Insights Report{% endblock %}
+
+{% block content %}
+<div class="document-header">
+    <h1>Insights Report for Climate Policy</h1>
+</div>
+
+<div class="container">
+    <div class="pdf-viewer">
+        <!-- PDF viewer embed code -->
+        <md-block>
+            {{ report.content }}
+        </md-block>
+    </div>
+    <div class="insight">
+        <!-- insight interface code -->
+        <div class="insights-list">
+            {% for insight in insights %}
+            <div class="insight-message">
+                {{ insight.insight }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+
+    .document-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 20px;
+        background-color: var(--sl-color-neutral-100);
+        border-bottom: 1px solid #ccc;
+    }
+
+    .document-actions sl-button {
+        margin-left: 10px;
+    }
+
+    .container {
+        display: flex;
+        height: calc(100vh - 60px); /* Adjust for the height of the navbar */
+    }
+
+    .pdf-viewer {
+        flex: 4;
+        padding: 20px 20px 0 0;
+        border-right: 1px solid #ccc;
+    }
+
+    .insight {
+        flex: 1;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .insights-list {
+        flex: 1;
+        overflow-y: auto;
+        margin-bottom: 20px;
+    }
+
+    .insight-message {
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+    }
+
+    .insight-message.user {
+        background-color: #e7f3ff;
+    }
+
+    .insight-message.ai {
+        background-color: #f0f0f0;
+    }
+
+    .insight-message .insight-date {
+        display: block;
+        font-size: 0.8em;
+        color: #666;
+    }
+
+    .insight form {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .insight form sl-input {
+        margin-bottom: 10px;
+    }
+
+    .insight form sl-button {
+        align-self: flex-start;
+    }
+</style>
+{% endblock %}

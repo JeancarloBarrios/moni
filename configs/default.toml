@@ -1,9 +1,13 @@
 debug = true
 
 [database]
-url = "postgresql://user:pass@localhost:5432/db"
+url = "postgresql://postgres:postgres@localhost:5432/moni"
 connections = 20
 
 [server]
 host = "127.0.0.1"
 port = 8080
+
+[firebase_config]
+key = "test"
+url = "https://test.firebaseio.com"

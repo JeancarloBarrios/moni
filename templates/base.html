@@ -4,7 +4,8 @@
   <script src="/static/htmx.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/themes/light.css" />
   <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/shoelace-autoloader.js"></script>
-
+  <script type="module" src="https://md-block.verou.me/md-block.js"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/loading-states.js"></script>
   <!-- Allow any inheriting page to set its own title -->
   <title>{% block title %}{{ title }}{% endblock %}</title>
 
@@ -12,6 +13,19 @@
   {% block head %}{% endblock %}
 
   <style>
+    [data-loading] {
+      display: none;
+    }
+    :root {
+      --sl-color-neutral-100: #f0f0f0; /* Light neutral background color */
+      --sl-panel-background-color: #ffffff; /* Background color for the sidebar */
+      --sl-shadow-x-small: 0 1px 2px rgba(0, 0, 0, 0.1); /* Very small shadow */
+      --sl-shadow-small: 0 2px 4px rgba(0, 0, 0, 0.1); /* Small shadow */
+      --sl-color-gray-700: #4a4a4a; /* Dark gray color for text */
+      --sl-font-size-large: 1.25rem; /* Large font size */
+      --sl-color-primary-500: #007bff; /* Primary color (e.g., blue) */
+      --sl-color-white: #ffffff; /* White color */
+    }
     body {
       display: flex;
       flex-direction: column;
@@ -22,7 +36,7 @@
     }
 
     .sidebar {
-      width: 250px;
+      width: 200px;
       background-color: var(--sl-panel-background-color);
       padding: 20px;
       box-shadow: var(--sl-shadow-x-small);
@@ -45,8 +59,8 @@
       justify-content: right;
       align-items: center;
       box-shadow: var(--sl-shadow-small);
-      margin-left: 250px;
-      height: 60px;
+      margin-left: 200px;
+      height: 30px;
     }
 
 
@@ -57,8 +71,8 @@
     .content-wrapper {
       display: flex;
       flex: 1;
-      margin-top: 60px; /* Adjust for the height of the navbar */
-      margin-left: 350px; /* Adjust for the width of the sidebar */
+      margin-top: 20px; /* Adjust for the height of the navbar */
+      margin-left: 300px; /* Adjust for the width of the sidebar */
     }
 
     .content {
@@ -78,6 +92,7 @@
 
     sl-menu-item sl-icon {
       margin-right: 10px;
+      color: var(--sl-color-neutral-100)
     }
   </style>
 </head>
@@ -86,17 +101,17 @@
   <img src="/static/img.png" alt="Moni Logo" style="width: 150px; height: auto;">
 
   <sl-menu>
-    <sl-menu-item>
-      <sl-icon name="house"></sl-icon>
-      <span>Home</span>
-    </sl-menu-item>
-    <sl-menu-item>
+    <sl-menu-item >
       <sl-icon name="file-earmark"></sl-icon>
       <span>Documents</span>
     </sl-menu-item>
+    <sl-menu-item hx-on="click: window.location.href='/report-template'">
+      <sl-icon name="file-earmark"></sl-icon>
+      <span>Insights Report</span>
+    </sl-menu-item>
     <sl-menu-item>
-      <sl-icon name="gear"></sl-icon>
-      <span>Settings</span>
+      <sl-icon name="file-earmark"></sl-icon>
+      <span>Data Sources</span>
     </sl-menu-item>
   </sl-menu>
 </div>

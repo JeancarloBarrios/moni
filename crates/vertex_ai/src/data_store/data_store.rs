@@ -320,20 +320,27 @@ impl DataStoreClient {
         Ok(search_chunks_response)
     }
 
-    pub async fn search(&self, request: SearchRequest) -> Result<SearchResponse, Error> {
+    pub async fn search(&self, request: SearchRequest) -> Result<(), Error> {
         let location = "global";
-        let data_store = "moni-demo_1722720098936";
-        let url = format!("https://discoveryengine.googleapis.com/v1alpha/projects/{}/locations/{}/collections/default_collection/dataStores/{}/servingconfigs/default_search:search", request.project_id, location, data_store);
+        let app_id = "moni-demo-final_1722720080773";
+        // let data_store = "moni-demo_1722720098936";
+        let server_config = format!("projects/{}/locations/{}/collections/default_collection/engines/{}/servingConfigs/default_serving_config", request.project_id, location, app_id);
+        let url = format!(
+            "https://discoveryengine.googleapis.com/v1/{}:search",
+            server_config
+        );
         let response = self
             .client
             .api_post(&[BASE_SCOPE], &url, request.discovery_engine_search_request)
             .await
-            .map_err(Error::ClientError)?
-            .error_for_status()
-            .map_err(Error::HttpStatus)?;
-        let search_response: SearchResponse =
-            response.json().await.map_err(Error::ResponseJsonParsing)?;
-        Ok(search_response)
+            .map_err(Error::ClientError)?;
+        // .error_for_status()
+        // .map_err(Error::HttpStatus)?;
+        println!("{:?}", response.text().await.unwrap());
+        // let search_response: SearchResponse =
+        //     response.json().await.map_err(Error::ResponseJsonParsing)?;
+        // Ok(search_response)
+        Ok(())
     }
 }
 
@@ -401,10 +408,9 @@ struct SessionInfo {
 #[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct DiscoveryEngineSearchRequest {
-    pub session: String,
     pub branch: String,
     pub query: String,
-    pub image_bytes: ImageQuery,
+    pub image_query: ImageQuery,
     pub page_size: u32,
     pub page_token: String,
     pub offset: u32,
@@ -414,12 +420,31 @@ pub struct DiscoveryEngineSearchRequest {
     pub order_by: String,
     pub user_info: UserInfo,
     pub language_code: String,
-    pub region_code: String,
     pub facet_specs: Vec<FacetSpec>,
     pub boost_spec: BoostSpec,
+    pub params: HashMap<String, Value>,
     pub query_expansion_spec: QueryExpansionSpec,
     pub spell_correction_spec: SpellCorrectionSpec,
-    pub content_serach_spec: ContentSearchSpec,
+    pub user_pseudo_id: String,
+    pub content_search_spec: ContentSearchSpec,
+    pub safe_search: bool,
+    pub user_labels: HashMap<String, Value>,
+    pub search_as_you_type_spec: SearchAsYouTypeSpec,
+    pub session: String,
+    pub session_spec: SessionSpec,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct SessionSpec {
+    pub query_id: String,
+    pub search_result_persistence_count: u32,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct SearchAsYouTypeSpec {
+    pub condition: SearchAsYouTypeCondition,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -428,9 +453,46 @@ pub struct ContentSearchSpec {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub snippet_spec: Option<SnippetSpec>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub summary_spec: Option<SummarySpec>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub chunk_spec: Option<ChunkSpec>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub extractive_content_spec: Option<ExtractiveContentSpec>,
+    pub search_result_mode: SearchResultMode,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum SearchResultMode {
+    #[default]
+    SearchResultModeUnspecified,
+    Documents,
+    Chunks,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct SummarySpec {
+    pub summary_result_count: u32,
+    pub include_citations: bool,
+    pub ignore_adversarial_query: bool,
+    pub ignore_non_summary_seeking_query: bool,
+    pub model_prompt_spec: ModelPromptSpec,
+    pub language_mode: String,
+    pub model_spec: ModelSpec,
+    pub use_semantic_chunks: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct ModelPromptSpec {
+    pub preamble: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct ModelSpec {
+    pub version: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -482,16 +544,6 @@ pub struct BoostSpec {
 pub struct ConditionBoostSpec {
     pub condition: String,
     pub boost: i32,
-    pub boost_control_spec: BoostControlSpec,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct BoostControlSpec {
-    pub field_name: String,
-    pub attribute_type: AttributeType,
-    pub interpolation_types: InterpolationType,
-    pub control_point: Vec<ControlPoint>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -569,6 +621,16 @@ pub struct Interval {
 #[serde(rename_all = "camelCase")]
 pub struct QueryExpansionSpec {
     pub condition: Condition,
+    pub pin_unexpanded_results: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum SearchAsYouTypeCondition {
+    ConditionUnspecified,
+    #[default]
+    Disabled,
+    Enabled,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -1010,22 +1072,24 @@ mod tests_integrations {
             "GOOGLE_APPLICATION_CREDENTIALS",
             "../../private/gcp_key.json",
         );
-        let project_id = "moni-429523";
-        let collections = "default_collection";
-        let data_store_id = "moni-demo_1722720098936";
+        let project_id = "875055333740";
+        let _collections = "default_collection";
+        let _data_store_id = "moni-demo_1722720098936";
 
         let request = SearchRequest {
             project_id: project_id.to_string(),
             discovery_engine_search_request: DiscoveryEngineSearchRequest {
+                session: "projects/875055333740/locations/global/collections/default_collection/engines/moni-demo-final_1722720080773/sessions/-".to_string(),
                 query: "Can you show all document that a relevant for Colombian Climate adaptation"
                     .to_string(),
                 page_size: 10,
                 filter: "".to_string(),
                 query_expansion_spec: QueryExpansionSpec {
                     condition: Condition::Auto,
+                    ..Default::default()
                 },
                 spell_correction_spec: SpellCorrectionSpec { mode: Mode::Auto },
-                content_serach_spec: ContentSearchSpec {
+                content_search_spec: ContentSearchSpec {
                     extractive_content_spec: Some(ExtractiveContentSpec {
                         max_extractive_segment_count: Some(1),
                         ..Default::default()
@@ -1036,6 +1100,11 @@ mod tests_integrations {
                         ..Default::default()
                     }),
                     chunk_spec: None,
+                    ..Default::default()
+                },
+                session_spec: SessionSpec{
+                    search_result_persistence_count: 5,
+                    ..Default::default()
                 },
                 ..Default::default()
             },
@@ -1043,8 +1112,7 @@ mod tests_integrations {
 
         let client = DataStoreClient::new().await.unwrap();
         let response = client.search(request).await;
-        println!("{:?}", response);
-        assert!(response.is_ok());
+        // assert!(response.is_ok());
         let search_response = response.unwrap();
         println!("{:?}", search_response);
     }

@@ -272,20 +272,6 @@ impl DataStoreClient {
             response.json().await.map_err(Error::ResponseJsonParsing)?;
         Ok(search_response)
     }
-    pub async fn list_documents(&self, project_id: String, data_store_id: String) -> Result<Vec<Document>, Error> {
-        let location = "global";
-        let parent = format!("projects/{}/locations/{}/collections/default_collection/dataStores/{}/documents", project_id, location, data_store_id );
-        let url = format!("https://discoveryengine.googleapis.com/v1beta/{}", location);
-        let response = self
-            .client
-            .api_get(&[BASE_SCOPE], &url)
-            .await
-            .map_err(Error::ClientError)?
-            .error_for_status()
-            .map_err(Error::HttpStatus)?;
-        let documents: Vec<Document> = response.json().await.map_err(Error::ResponseJsonParsing)?;
-        Ok(documents)
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]

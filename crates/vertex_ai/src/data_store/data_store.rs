@@ -46,7 +46,7 @@ impl DataStoreClient {
 
         let url = reqwest::Url::parse_with_params(
             format!(
-                "https://discoveryengine.googleapis.com/v1/projects/{}/locations/{}/collections/{}/dataStores",
+                "https://discoveryengine.googleapis.com/v1beta/projects/{}/locations/{}/collections/{}/dataStores",
                 request.project_id, location, request.collections
             )
             .as_str(),
@@ -228,75 +228,6 @@ impl DataStoreClient {
     ///  For more information, see the [IAM documentation](https://cloud.google.com/iam/docs/).
     ///
     ///  Note: Ensure that the `request` parameter is correctly formatted with the project ID, collection, data store ID, branch, and document ID.
-    pub async fn get_operation_status(
-        &self,
-        request: GetOperationStatusRequest,
-    ) -> Result<Operation, Box<dyn std::error::Error>> {
-        let location = "global";
-
-        let url = format!(
-            "https://discoveryengine.googleapis.com/v1alpha/projects/{}/locations/{}/collections/{}/dataStores/{}/operations/{}",
-            request.project_id, location, request.collection, request.data_store_id, request.operation_name
-        );
-
-        let response = self
-            .client
-            .api_get_with_params(
-                &["https://www.googleapis.com/auth/cloud-platform"],
-                &url,
-                None,
-            )
-            .await
-            .map_err(|err| Box::new(Error::ClientError(err)) as Box<dyn std::error::Error>)?
-            .error_for_status()
-            .map_err(|err| Box::new(Error::HttpStatus(err)))?;
-
-        if response.status().is_success() {
-            let operation: Operation = response.json().await?;
-            Ok(operation)
-        } else {
-            let error = response.text().await?;
-            Err(Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                error,
-            )))
-        }
-    }
-
-    pub async fn poll_operation(
-        &self,
-        request: PollOperationRequest,
-        max_retries: Option<u32>,
-        wait_time: Option<u64>,
-    ) -> bool {
-        let max_retries = max_retries.unwrap_or(20);
-        let wait_time = wait_time.unwrap_or(5);
-        let mut retries = 0;
-
-        loop {
-            let request = GetOperationStatusRequest {
-                operation_name: request.operation_name.to_string(),
-                project_id: request.project_id.to_string(),
-                collection: request.collection.to_string(),
-                data_store_id: request.data_store_id.to_string(),
-                branch: request.branch.to_string(),
-            };
-            let operation_status = self.get_operation_status(request).await;
-            println!("polling operation {:?}", operation_status);
-            println!();
-            match operation_status {
-                Ok(status) if status.done => return true,
-                Ok(_) => {
-                    retries += 1;
-                    if retries >= max_retries {
-                        return false;
-                    }
-                    sleep(Duration::from_secs(wait_time)).await; // Adjust the duration as needed
-                }
-                Err(_) => return false,
-            }
-        }
-    }
 
     pub async fn search_chunks(
         &self,
@@ -320,51 +251,48 @@ impl DataStoreClient {
         Ok(search_chunks_response)
     }
 
-    pub async fn search(&self, request: SearchRequest) -> Result<(), Error> {
+    pub async fn search(&self, request: SearchRequest) -> Result<SearchResponse, Error> {
         let location = "global";
         let app_id = "moni-demo-final_1722720080773";
         // let data_store = "moni-demo_1722720098936";
         let server_config = format!("projects/{}/locations/{}/collections/default_collection/engines/{}/servingConfigs/default_serving_config", request.project_id, location, app_id);
         let url = format!(
-            "https://discoveryengine.googleapis.com/v1/{}:search",
+            "https://discoveryengine.googleapis.com/v1beta/{}:search",
             server_config
         );
         let response = self
             .client
             .api_post(&[BASE_SCOPE], &url, request.discovery_engine_search_request)
             .await
-            .map_err(Error::ClientError)?;
-        // .error_for_status()
-        // .map_err(Error::HttpStatus)?;
-        println!("{:?}", response.text().await.unwrap());
-        // let search_response: SearchResponse =
-        //     response.json().await.map_err(Error::ResponseJsonParsing)?;
-        // Ok(search_response)
-        Ok(())
+            .map_err(Error::ClientError)?
+            .error_for_status()
+            .map_err(Error::HttpStatus)?;
+
+        let search_response: SearchResponse =
+            response.json().await.map_err(Error::ResponseJsonParsing)?;
+        Ok(search_response)
+    }
+    pub async fn list_documents(&self, project_id: String, data_store_id: String) -> Result<Vec<Document>, Error> {
+        let location = "global";
+        let parent = format!("projects/{}/locations/{}/collections/default_collection/dataStores/{}/documents", project_id, location, data_store_id );
+        let url = format!("https://discoveryengine.googleapis.com/v1beta/{}", location);
+        let response = self
+            .client
+            .api_get(&[BASE_SCOPE], &url)
+            .await
+            .map_err(Error::ClientError)?
+            .error_for_status()
+            .map_err(Error::HttpStatus)?;
+        let documents: Vec<Document> = response.json().await.map_err(Error::ResponseJsonParsing)?;
+        Ok(documents)
     }
 }
 
-pub struct SearchRequest {
-    pub project_id: String,
-    pub discovery_engine_search_request: DiscoveryEngineSearchRequest,
-}
-
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct SearchResponse {
-    results: Vec<ResultItem>,
-    total_size: u32,
-    attribution_token: String,
-    guided_search_result: serde_json::Value,
-    summary: serde_json::Value,
-    session_info: SessionInfo,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-struct ResultItem {
-    id: String,
-    document: Document,
+struct ListDocumentsResponse {
+    documents: Vec<Document>,
+    next_page_token: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -372,18 +300,290 @@ struct ResultItem {
 struct Document {
     name: String,
     id: String,
-    derived_struct_data: DerivedStructData,
+    content: Option<Content>,
+    parent_document_id: Option<String>,
+    derived_struct_data: Option<serde_json::Value>,
+    acl_info: Option<AclInfo>,
+    index_time: Option<String>,
+    #[serde(flatten)]
+    data: Option<DocumentData>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct DerivedStructData {
-    snippets: Vec<Snippet>,
-    link: String,
-    title: String,
-    extractive_answers: Vec<ExtractiveAnswer>,
+struct Content {
+    mime_type: String,
+    #[serde(flatten)]
+    content: Option<ContentData>,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(untagged)]
+enum ContentData {
+    RawBytes { raw_bytes: String },
+    Uri { uri: String },
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct AclInfo {
+    readers: Option<Vec<AccessRestriction>>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct AccessRestriction {
+    principals: Option<Vec<Principal>>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct Principal {
+    #[serde(flatten)]
+    principal: Option<PrincipalType>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(untagged)]
+enum PrincipalType {
+    UserId { user_id: String },
+    GroupId { group_id: String },
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(untagged)]
+enum DocumentData {
+    StructData { struct_data: serde_json::Value },
+    JsonData { json_data: String },
+}
+pub struct SearchRequest {
+    pub project_id: String,
+    pub discovery_engine_search_request: DiscoveryEngineSearchRequest,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct SearchResponse {
+    results: Option<Vec<SearchResult>>,
+    facets: Option<Vec<Facet>>,
+    guided_search_result: Option<GuidedSearchResult>,
+    total_size: Option<i32>,
+    attribution_token: Option<String>,
+    redirect_uri: Option<String>,
+    next_page_token: Option<String>,
+    corrected_query: Option<String>,
+    summary: Option<Summary>,
+    applied_controls: Option<Vec<String>>,
+    geo_search_debug_info: Option<Vec<GeoSearchDebugInfo>>,
+    query_expansion_info: Option<QueryExpansionInfo>,
+    natural_language_query_understanding_info: Option<NaturalLanguageQueryUnderstandingInfo>,
+    session_info: Option<SessionInfo>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct NaturalLanguageQueryUnderstandingInfo {
+    extracted_filters: Option<String>,
+    rewritten_query: Option<String>,
+    structured_extracted_filter: Option<StructuredExtractedFilter>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct StructuredExtractedFilter {
+    expression: Option<Expression>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+#[serde(untagged)]
+enum Expression {
+    StringConstraint { string_constraint: StringConstraint },
+    NumberConstraint { number_constraint: NumberConstraint },
+    GeolocationConstraint { geolocation_constraint: GeolocationConstraint },
+    AndExpr { and_expr: AndExpression },
+    OrExpr { or_expr: OrExpression },
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct StringConstraint {
+    field_name: String,
+    values: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct NumberConstraint {
+    field_name: String,
+    comparison: Comparison,
+    value: f64,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+enum Comparison {
+    COMPARISON_UNSPECIFIED,
+    EQUALS,
+    LESS_THAN_EQUALS,
+    LESS_THAN,
+    GREATER_THAN_EQUALS,
+    GREATER_THAN,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct GeolocationConstraint {
+    field_name: String,
+    address: String,
+    radius_in_meters: f64,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct AndExpression {
+    expressions: Vec<Expression>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct OrExpression {
+    expressions: Vec<Expression>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct QueryExpansionInfo {
+    expanded_query: bool,
+    pinned_result_count: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct GeoSearchDebugInfo {
+    original_address_query: String,
+    error_message: String,
+}
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct Summary {
+    summary_text: Option<String>,
+    summary_skipped_reasons: Option<Vec<SummarySkippedReason>>,
+    safety_attributes: Option<SafetyAttributes>,
+    summary_with_metadata: Option<SummaryWithMetadata>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+enum SummarySkippedReason {
+    #[default]
+    SummarySkippedReasonUnspecified,
+    AdversarialQueryIgnored,
+    NonSummarySeekingQueryIgnored,
+    OutOfDomainQueryIgnored,
+    PotentialPolicyViolation,
+    LlmAddonNotEnabled,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct SafetyAttributes {
+    categories: Option<Vec<String>>,
+    scores: Option<Vec<f64>>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct SummaryWithMetadata {
+    summary: String,
+    citation_metadata: Option<CitationMetadata>,
+    references: Option<Vec<Reference>>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct CitationMetadata {
+    citations: Option<Vec<Citation>>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct Citation {
+    start_index: String,
+    end_index: String,
+    sources: Option<Vec<CitationSource>>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct CitationSource {
+    reference_index: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct Reference {
+    title: Option<String>,
+    document: String,
+    uri: Option<String>,
+    chunk_contents: Option<Vec<ChunkContent>>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct ChunkContent {
+    content: String,
+    page_identifier: Option<String>,
+}
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct GuidedSearchResult {
+    refinement_attributes: Option<Vec<RefinementAttribute>>,
+    follow_up_questions: Option<Vec<String>>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct RefinementAttribute {
+    attribute_key: String,
+    attribute_value: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct Facet {
+    key: String,
+    values: Vec<FacetValue>,
+    dynamic_facet: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct FacetValue {
+    count: String,
+    #[serde(flatten)]
+    facet_value: FacetValueType,
+}
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(untagged)]
+enum FacetValueType {
+    Value { value: String },
+    Interval { interval: Interval },
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct SearchResult {
+    id: Option<String>,
+    document: Option<Document>,
+    chunk: Option<Chunk>,
+    model_scores: Option<HashMap<String, DoubleList>>,
+}
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct DoubleList {
+    values: Option<Vec<f64>>,
+}
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 struct Snippet {
@@ -1102,7 +1302,7 @@ mod tests_integrations {
                     chunk_spec: None,
                     ..Default::default()
                 },
-                session_spec: SessionSpec{
+                session_spec: SessionSpec {
                     search_result_persistence_count: 5,
                     ..Default::default()
                 },
@@ -1112,9 +1312,10 @@ mod tests_integrations {
 
         let client = DataStoreClient::new().await.unwrap();
         let response = client.search(request).await;
-        // assert!(response.is_ok());
+        println!("{:?}", response);
+        assert!(response.is_ok());
         let search_response = response.unwrap();
-        println!("{:?}", search_response);
+
     }
 
     // Test create_data_store with a storage bucket.
@@ -1221,6 +1422,5 @@ mod tests_integrations {
     //
     //     println!("{:?}", delete_operation);
     //     assert!(delete_operation.is_ok());
-    //     println!("{:?}", delete_operation.unwrap());
-    // }
+    //     println!("{:?}", delete_operation
 }

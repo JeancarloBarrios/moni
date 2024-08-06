@@ -384,11 +384,21 @@ struct StructuredExtractedFilter {
 #[serde(rename_all = "camelCase")]
 #[serde(untagged)]
 enum Expression {
-    StringConstraint { string_constraint: StringConstraint },
-    NumberConstraint { number_constraint: NumberConstraint },
-    GeolocationConstraint { geolocation_constraint: GeolocationConstraint },
-    AndExpr { and_expr: AndExpression },
-    OrExpr { or_expr: OrExpression },
+    StringConstraint {
+        string_constraint: StringConstraint,
+    },
+    NumberConstraint {
+        number_constraint: NumberConstraint,
+    },
+    GeolocationConstraint {
+        geolocation_constraint: GeolocationConstraint,
+    },
+    AndExpr {
+        and_expr: AndExpression,
+    },
+    OrExpr {
+        or_expr: OrExpression,
+    },
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -400,21 +410,21 @@ struct StringConstraint {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct NumberConstraint {
-    field_name: String,
-    comparison: Comparison,
-    value: f64,
+pub struct NumberConstraint {
+    pub field_name: String,
+    pub comparison: Comparison,
+    pub value: f64,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-enum Comparison {
-    COMPARISON_UNSPECIFIED,
-    EQUALS,
-    LESS_THAN_EQUALS,
-    LESS_THAN,
-    GREATER_THAN_EQUALS,
-    GREATER_THAN,
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum Comparison {
+    ComparisonUnspecified,
+    Equals,
+    LessThanEquals,
+    LessThan,
+    GreaterThanEquals,
+    GreaterThan,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -461,6 +471,7 @@ struct Summary {
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[allow(clippy::enum_variant_names)]
 enum SummarySkippedReason {
     #[default]
     SummarySkippedReasonUnspecified,
@@ -1301,7 +1312,6 @@ mod tests_integrations {
         println!("{:?}", response);
         assert!(response.is_ok());
         let search_response = response.unwrap();
-
     }
 
     // Test create_data_store with a storage bucket.
@@ -1410,3 +1420,4 @@ mod tests_integrations {
     //     assert!(delete_operation.is_ok());
     //     println!("{:?}", delete_operation
 }
+

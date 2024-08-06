@@ -1,10 +1,9 @@
 use crate::data_store::error::Error;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{collections::HashMap, default, string};
+use std::collections::HashMap;
 
 use crate::client::Client;
-use tokio::time::{sleep, Duration};
 const BASE_SCOPE: &str = "https://www.googleapis.com/auth/cloud-platform";
 
 pub struct DataStoreClient {
@@ -283,62 +282,62 @@ struct ListDocumentsResponse {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct Document {
-    name: String,
-    id: String,
-    content: Option<Content>,
-    parent_document_id: Option<String>,
-    derived_struct_data: Option<serde_json::Value>,
-    acl_info: Option<AclInfo>,
-    index_time: Option<String>,
+pub struct Document {
+    pub name: String,
+    pub id: String,
+    pub content: Option<Content>,
+    pub parent_document_id: Option<String>,
+    pub derived_struct_data: Option<serde_json::Value>,
+    pub acl_info: Option<AclInfo>,
+    pub index_time: Option<String>,
     #[serde(flatten)]
-    data: Option<DocumentData>,
+    pub data: Option<DocumentData>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct Content {
-    mime_type: String,
+pub struct Content {
+    pub mime_type: String,
     #[serde(flatten)]
-    content: Option<ContentData>,
+    pub content: Option<ContentData>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(untagged)]
-enum ContentData {
+pub enum ContentData {
     RawBytes { raw_bytes: String },
     Uri { uri: String },
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct AclInfo {
+pub struct AclInfo {
     readers: Option<Vec<AccessRestriction>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct AccessRestriction {
-    principals: Option<Vec<Principal>>,
+pub struct AccessRestriction {
+    pub principals: Option<Vec<Principal>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct Principal {
+pub struct Principal {
     #[serde(flatten)]
-    principal: Option<PrincipalType>,
+    pub principal: Option<PrincipalType>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(untagged)]
-enum PrincipalType {
+pub enum PrincipalType {
     UserId { user_id: String },
     GroupId { group_id: String },
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(untagged)]
-enum DocumentData {
+pub enum DocumentData {
     StructData { struct_data: serde_json::Value },
     JsonData { json_data: String },
 }
@@ -347,43 +346,43 @@ pub struct SearchRequest {
     pub discovery_engine_search_request: DiscoveryEngineSearchRequest,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(rename_all = "camelCase")]
-struct SearchResponse {
-    results: Option<Vec<SearchResult>>,
-    facets: Option<Vec<Facet>>,
-    guided_search_result: Option<GuidedSearchResult>,
-    total_size: Option<i32>,
-    attribution_token: Option<String>,
-    redirect_uri: Option<String>,
-    next_page_token: Option<String>,
-    corrected_query: Option<String>,
-    summary: Option<Summary>,
-    applied_controls: Option<Vec<String>>,
-    geo_search_debug_info: Option<Vec<GeoSearchDebugInfo>>,
-    query_expansion_info: Option<QueryExpansionInfo>,
-    natural_language_query_understanding_info: Option<NaturalLanguageQueryUnderstandingInfo>,
-    session_info: Option<SessionInfo>,
+pub struct SearchResponse {
+    pub results: Option<Vec<SearchResult>>,
+    pub facets: Option<Vec<Facet>>,
+    pub guided_search_result: Option<GuidedSearchResult>,
+    pub total_size: Option<i32>,
+    pub attribution_token: Option<String>,
+    pub redirect_uri: Option<String>,
+    pub next_page_token: Option<String>,
+    pub corrected_query: Option<String>,
+    pub summary: Option<Summary>,
+    pub applied_controls: Option<Vec<String>>,
+    pub geo_search_debug_info: Option<Vec<GeoSearchDebugInfo>>,
+    pub query_expansion_info: Option<QueryExpansionInfo>,
+    pub natural_language_query_understanding_info: Option<NaturalLanguageQueryUnderstandingInfo>,
+    pub session_info: Option<SessionInfo>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct NaturalLanguageQueryUnderstandingInfo {
-    extracted_filters: Option<String>,
-    rewritten_query: Option<String>,
-    structured_extracted_filter: Option<StructuredExtractedFilter>,
+pub struct NaturalLanguageQueryUnderstandingInfo {
+    pub extracted_filters: Option<String>,
+    pub rewritten_query: Option<String>,
+    pub structured_extracted_filter: Option<StructuredExtractedFilter>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct StructuredExtractedFilter {
-    expression: Option<Expression>,
+pub struct StructuredExtractedFilter {
+    pub expression: Option<Expression>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 #[serde(untagged)]
-enum Expression {
+pub enum Expression {
     StringConstraint {
         string_constraint: StringConstraint,
     },
@@ -403,9 +402,9 @@ enum Expression {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct StringConstraint {
-    field_name: String,
-    values: Vec<String>,
+pub struct StringConstraint {
+    pub field_name: String,
+    pub values: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -429,50 +428,50 @@ pub enum Comparison {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct GeolocationConstraint {
-    field_name: String,
-    address: String,
-    radius_in_meters: f64,
+pub struct GeolocationConstraint {
+    pub field_name: String,
+    pub address: String,
+    pub radius_in_meters: f64,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct AndExpression {
-    expressions: Vec<Expression>,
+pub struct AndExpression {
+    pub expressions: Vec<Expression>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct OrExpression {
-    expressions: Vec<Expression>,
+pub struct OrExpression {
+    pub expressions: Vec<Expression>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct QueryExpansionInfo {
-    expanded_query: bool,
-    pinned_result_count: Option<String>,
+pub struct QueryExpansionInfo {
+    pub expanded_query: bool,
+    pub pinned_result_count: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct GeoSearchDebugInfo {
-    original_address_query: String,
-    error_message: String,
+pub struct GeoSearchDebugInfo {
+    pub original_address_query: String,
+    pub error_message: String,
 }
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct Summary {
-    summary_text: Option<String>,
-    summary_skipped_reasons: Option<Vec<SummarySkippedReason>>,
-    safety_attributes: Option<SafetyAttributes>,
-    summary_with_metadata: Option<SummaryWithMetadata>,
+pub struct Summary {
+    pub summary_text: Option<String>,
+    pub summary_skipped_reasons: Option<Vec<SummarySkippedReason>>,
+    pub safety_attributes: Option<SafetyAttributes>,
+    pub summary_with_metadata: Option<SummaryWithMetadata>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[allow(clippy::enum_variant_names)]
-enum SummarySkippedReason {
+pub enum SummarySkippedReason {
     #[default]
     SummarySkippedReasonUnspecified,
     AdversarialQueryIgnored,
@@ -484,122 +483,122 @@ enum SummarySkippedReason {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct SafetyAttributes {
-    categories: Option<Vec<String>>,
-    scores: Option<Vec<f64>>,
+pub struct SafetyAttributes {
+    pub categories: Option<Vec<String>>,
+    pub scores: Option<Vec<f64>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct SummaryWithMetadata {
-    summary: String,
-    citation_metadata: Option<CitationMetadata>,
-    references: Option<Vec<Reference>>,
+pub struct SummaryWithMetadata {
+    pub summary: String,
+    pub citation_metadata: Option<CitationMetadata>,
+    pub references: Option<Vec<Reference>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct CitationMetadata {
-    citations: Option<Vec<Citation>>,
+pub struct CitationMetadata {
+    pub citations: Option<Vec<Citation>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct Citation {
-    start_index: String,
-    end_index: String,
-    sources: Option<Vec<CitationSource>>,
+pub struct Citation {
+    pub start_index: String,
+    pub end_index: String,
+    pub sources: Option<Vec<CitationSource>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct CitationSource {
-    reference_index: String,
+pub struct CitationSource {
+    pub reference_index: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct Reference {
-    title: Option<String>,
-    document: String,
-    uri: Option<String>,
-    chunk_contents: Option<Vec<ChunkContent>>,
+pub struct Reference {
+    pub title: Option<String>,
+    pub document: String,
+    pub uri: Option<String>,
+    pub chunk_contents: Option<Vec<ChunkContent>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct ChunkContent {
-    content: String,
-    page_identifier: Option<String>,
+pub struct ChunkContent {
+    pub content: String,
+    pub page_identifier: Option<String>,
 }
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct GuidedSearchResult {
-    refinement_attributes: Option<Vec<RefinementAttribute>>,
-    follow_up_questions: Option<Vec<String>>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-struct RefinementAttribute {
-    attribute_key: String,
-    attribute_value: String,
+pub struct GuidedSearchResult {
+    pub refinement_attributes: Option<Vec<RefinementAttribute>>,
+    pub follow_up_questions: Option<Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct Facet {
-    key: String,
-    values: Vec<FacetValue>,
-    dynamic_facet: bool,
+pub struct RefinementAttribute {
+    pub attribute_key: String,
+    pub attribute_value: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct FacetValue {
-    count: String,
+pub struct Facet {
+    pub key: String,
+    pub values: Vec<FacetValue>,
+    pub dynamic_facet: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct FacetValue {
+    pub count: String,
     #[serde(flatten)]
-    facet_value: FacetValueType,
+    pub facet_value: FacetValueType,
 }
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(untagged)]
-enum FacetValueType {
+pub enum FacetValueType {
     Value { value: String },
     Interval { interval: Interval },
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct SearchResult {
-    id: Option<String>,
-    document: Option<Document>,
-    chunk: Option<Chunk>,
-    model_scores: Option<HashMap<String, DoubleList>>,
+pub struct SearchResult {
+    pub id: Option<String>,
+    pub document: Option<Document>,
+    pub chunk: Option<Chunk>,
+    pub model_scores: Option<HashMap<String, DoubleList>>,
 }
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct DoubleList {
-    values: Option<Vec<f64>>,
+pub struct DoubleList {
+    pub values: Option<Vec<f64>>,
 }
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct Snippet {
-    snippet_status: String,
-    snippet: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-struct ExtractiveAnswer {
-    page_number: String,
-    content: String,
+pub struct Snippet {
+    pub snippet_status: String,
+    pub snippet: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct SessionInfo {
-    name: String,
-    query_id: String,
+pub struct ExtractiveAnswer {
+    pub page_number: String,
+    pub content: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct SessionInfo {
+    pub name: String,
+    pub query_id: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -1179,7 +1178,7 @@ mod tests_integrations {
 
     use super::*;
     use rand::{self, Rng};
-    use std::{env, thread};
+    use std::{env, thread, time::Duration};
 
     // Test token_provider
     // #[tokio::test]
@@ -1420,4 +1419,3 @@ mod tests_integrations {
     //     assert!(delete_operation.is_ok());
     //     println!("{:?}", delete_operation
 }
-

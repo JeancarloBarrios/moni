@@ -1,4 +1,4 @@
-use crate::data_store::error::Error;
+use crate::discovery_engine::error::Error;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -1178,7 +1178,7 @@ mod tests_integrations {
 
     use super::*;
     use rand::{self, Rng};
-    use std::{env, thread, time::Duration};
+    use std::{env, thread};
 
     // Test token_provider
     // #[tokio::test]
@@ -1249,7 +1249,7 @@ mod tests_integrations {
         // let operation_finished = client.poll_operation(operation_request, None, None).await;
         // assert!(operation_finished);
         // Now lets delete it
-        thread::sleep(Duration::from_secs(5));
+        thread::sleep(::from_secs(5));
         let delete_request = DeleteDataStoreRequest {
             project_id: project_id.to_string(),
             collections: collections.to_string(),

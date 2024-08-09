@@ -1,18 +1,21 @@
+use crate::templates;
+use crate::templates::{
+    AddToReportDialogueTemplate, DocumentDetailsTemplate, DocumentsTemplate, InsightReportPage,
+};
 use askama_axum::IntoResponse;
 use axum::extract::Path as AxumPath;
 use chrono::prelude::*;
-use crate::templates;
-use crate::templates::{DocumentDetailsTemplate, DocumentsTemplate, AddToReportDialogueTemplate, InsightReportPage};
 
 use crate::documents::read_documents;
 pub async fn home() -> impl IntoResponse {
     templates::Index
 }
 
-
 //get documents handler
 pub async fn get_documents() -> impl IntoResponse {
-    let template = DocumentsTemplate { docs: read_documents().await};
+    let template = DocumentsTemplate {
+        docs: read_documents().await,
+    };
     // HtmlTemplate(template)
     template
 }
@@ -38,7 +41,7 @@ pub async fn add_to_repo_dialogue_document() -> impl IntoResponse {
             document: dummy_document,
             insight: insights.to_string(),
             id: 89,
-        }
+        },
     };
     // HtmlTemplate(template)
     template
@@ -109,7 +112,10 @@ pub async fn view_document(AxumPath(id): AxumPath<u64>) -> impl IntoResponse {
         },
     ];
 
-    let template = DocumentDetailsTemplate { document: dummy_document, document_chat: chat};
+    let template = DocumentDetailsTemplate {
+        document: dummy_document,
+        document_chat: chat,
+    };
     // HtmlTemplate(template)
     template
 }
@@ -149,11 +155,12 @@ pub async fn insight_report_page() -> impl IntoResponse {
         insights: insights,
         report: crate::documents::Report {
             id: 1,
-            content: "This is a report on the insights gathered from various documents.".to_string(),
+            content: "This is a report on the insights gathered from various documents."
+                .to_string(),
             template: " This is the template to provide LLM for report generation".to_string(),
             title: "Insights Report".to_string(),
             date: current_timestamp(),
-        }
+        },
     };
     // HtmlTemplate(template)
     template

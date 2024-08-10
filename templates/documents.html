@@ -2,6 +2,12 @@
 {% block title %}Documents{% endblock %}
 {% block content %}
 <h1>Documents</h1>
+<h3>
+    Summary of new Documents:
+</h3>
+<p>
+    {{ summary_text }}
+</p>
 <ul>
     {% for doc in docs %}
         {% include "document_card.html" %}

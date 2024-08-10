@@ -1,7 +1,7 @@
 use crate::discovery_engine::error::Error;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::HashMap;
+use std::{collections::HashMap, default};
 
 use crate::client::Client;
 const BASE_SCOPE: &str = "https://www.googleapis.com/auth/cloud-platform";
@@ -271,11 +271,247 @@ impl DataStoreClient {
             response.json().await.map_err(Error::ResponseJsonParsing)?;
         Ok(search_response)
     }
+
+    pub async fn answer(&self, request: AnswerRequest) -> Result<Answer, Error> {
+        let location = "global";
+        let app_id = "moni-demo-final_1722720080773";
+        let server_config = format!("projects/{}/locations/{}/collections/default_collection/engines/{}/servingConfigs/default_serving_config", request.project_id, location, app_id);
+        let url = format!(
+            "https://discoveryengine.googleapis.com/v1beta/{}:answer",
+            server_config
+        );
+        let response = self
+            .client
+            .api_post(&[BASE_SCOPE], &url, request.discovery_engine_answer_request)
+            .await
+            .map_err(Error::ClientError)?
+            .error_for_status()
+            .map_err(Error::HttpStatus)?;
+
+        let search_response: Answer = response.json().await.map_err(Error::ResponseJsonParsing)?;
+        Ok(search_response)
+    }
+}
+
+// #[derive(Serialize, Deserialize, Debug)]
+// #[serde(rename_all = "camelCase")]
+// pub struct FeedbackAnswerQueryResponse {
+//     pub answer:
+// }
+//
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Answer {
+    pub name: String,
+    pub state: State,
+    pub answer_text: String,
+    pub citations: Vec<Citation>,
+    pub references: Vec<AnswerReference>,
+    pub related_questions: Vec<String>,
+    pub steps: Vec<Step>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct ListDocumentsResponse {
+pub struct Step {
+    pub state: State,
+    pub description: String,
+    pub thought: String,
+}
+
+pub struct Action {
+    pub observation: Observation,
+}
+
+pub struct Observation {
+    pub search_results: Vec<SearchResult>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct AnswerReference {
+    pub unstructured_document_info: UnstructureDocumentInfo,
+    pub chunk_info: ChunkInfo,
+    pub structured_document_info: StructuredDocumentInfo,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct StructuredDocumentInfo {
+    pub document: String,
+    pub struct_data: Value,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct AnswerChunkInfo {
+    pub chunk: String,
+    pub content: String,
+    pub document_metadata: AnswerDocumentMetadata,
+    pub relevance_score: f64, // Using f64 to r
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct AnswerDocumentMetadata {
+    pub document: String,
+    pub uri: String,
+    pub title: String,
+    pub page_identifier: String,
+    pub struct_data: Value,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct AnswerUnstructureDocumentInfo {
+    pub document: String,
+    pub uri: String,
+    pub title: String,
+    pub chunk_contents: Vec<AnswerChunkContent>,
+    pub struct_data: Value,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct AnswerChunkContent {
+    pub content: String,
+    pub page_identifier: String,
+    pub relevance_score: f64,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum State {
+    Unspecified,
+    InProgress,
+    Failed,
+    Succeeded,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct AnswerRequest {
+    pub project_id: String,
+    pub discovery_engine_answer_request: DiscoveryEngineAnswerRequest,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct DiscoveryEngineAnswerRequest {
+    pub query: Query,
+    pub session: String,
+    pub safety_spec: SafetySpec,
+    pub related_questions_spec: RelatedQuestionsSpec,
+    pub answer_generation_spec: AnswerGenerationSpec,
+    pub search_spec: SearchSpec,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct SearchSpec {
+    pub search_params: SearchParams,
+    pub search_result_list: SearchResultList,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct SearchResultList {
+    pub search_results: Vec<AnswerSearchResult>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct AnswerSearchResult {
+    pub unstructured_document_info: UnstructureDocumentInfo,
+    pub chunk_info: ChunkInfo,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct ChunkInfo {
+    pub chunk: String,
+    pub content: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct UnstructureDocumentInfo {
+    pub document: String,
+    pub uri: String,
+    pub tittle: String,
+    pub document_context: Vec<DocumentContext>,
+    pub extractive_segments: Vec<ExtractiveSegments>,
+    pub extractive_answer: Vec<ExtractiveAnswer>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct ExtractiveSegments {
+    pub page_identifier: String,
+    pub content: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct DocumentContext {
+    pub page_identifier: String,
+    pub content: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct SearchParams {
+    pub max_return_results: i32,
+    pub filter: String,
+    pub boost_spec: BoostSpec,
+    pub order_by: String,
+    pub search_result_mode: SearchResultMode,
+    pub data_store_spec: Vec<DataStoreSpec>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct BoostControlSpec {
+    pub field_name: String,
+    pub attribute_type: AttributeType,
+    pub interpolation_type: InterpolationType,
+    pub control_points: Vec<ControlPoint>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct AnswerGenerationSpec {
+    pub model_spec: ModelSpec,
+    pub prompt_spec: ModelPromptSpec,
+    pub include_citations: bool,
+    pub answer_language_code: String,
+    pub ignore_adversarial_query: bool,
+    pub ignore_non_answer_seeking_query: bool,
+    pub ignore_low_relevant_content: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct RelatedQuestionsSpec {
+    pub enable: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct SafetySpec {
+    pub enable: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct Query {
+    pub query_id: String,
+    pub text: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ListDocumentsResponse {
     documents: Vec<Document>,
     next_page_token: Option<String>,
 }
@@ -749,17 +985,19 @@ pub struct ControlPoint {
     pub boost_amount: i32,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum AttributeType {
+    #[default]
     AttributeTypeUnspecified,
     Numerical,
     Freshness,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum InterpolationType {
+    #[default]
     InterpolationTypeUnspecified,
     Linear,
 }
@@ -966,10 +1204,10 @@ pub struct Chunk {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename = "camelCase")]
 pub struct DocumentMetadata {
     pub uri: String,
     pub title: String,
-    #[serde(rename = "structData")]
     pub struct_data: HashMap<String, Value>,
 }
 

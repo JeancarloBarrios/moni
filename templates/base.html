@@ -36,7 +36,7 @@
     }
 
     .sidebar {
-      width: 200px;
+      width: 275px;
       background-color: var(--sl-panel-background-color);
       padding: 20px;
       box-shadow: var(--sl-shadow-x-small);
@@ -97,21 +97,21 @@
   </style>
 </head>
 <body>
-<div class="sidebar">
+<div class="sidebar" style="overflow: hidden">
   <img src="/static/img.png" alt="Moni Logo" style="width: 150px; height: auto;">
 
   <sl-menu>
-    <sl-menu-item >
-      <sl-icon name="file-earmark"></sl-icon>
+    <sl-menu-item hx-on="click: window.location.href='/'">
+      <sl-icon name="file-earmark" style="color: #007bff"></sl-icon>
       <span>Documents</span>
     </sl-menu-item>
     <sl-menu-item hx-on="click: window.location.href='/report-template'">
-      <sl-icon name="file-earmark"></sl-icon>
+      <sl-icon name="receipt" style="color: #007bff"></sl-icon>
       <span>Insights Report</span>
     </sl-menu-item>
-    <sl-menu-item>
-      <sl-icon name="file-earmark"></sl-icon>
-      <span>Data Sources</span>
+    <sl-menu-item hx-on="click: window.location.href='/config'">
+      <sl-icon name="tools" style="color: #007bff"></sl-icon>
+      <span>Alerting Configurations</span>
     </sl-menu-item>
   </sl-menu>
 </div>
@@ -121,7 +121,7 @@
   <div class="nav-links">
     <sl-dropdown>
       <sl-button slot="trigger" circle size="large" variant="text">
-        <sl-icon name="person-circle" style="font-size: 2em;"></sl-icon>
+        <sl-icon name="person-circle" style="font-size: 2em; color: white"></sl-icon>
       </sl-button>
       <sl-menu>
         <sl-menu-item>
@@ -139,7 +139,7 @@
 
 <div class="content-wrapper">
   <!-- Main content area -->
-  <div class="content">
+  <div class="content" style="padding: 0 2rem">
     {% block content %}{% endblock %}
   </div>
 </div>

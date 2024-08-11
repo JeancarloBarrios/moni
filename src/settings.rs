@@ -25,12 +25,19 @@ pub struct FirebaseConfig {
     pub url: String,
 }
 
+
+#[derive(Debug, Deserialize)]
+pub struct GeminiConfig {
+    pub api_key: String,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct Settings {
     pub debug: bool,
     pub database: Database,
     pub server: Server,
     pub firebase_config: FirebaseConfig,
+    pub gemini_config: GeminiConfig,
 }
 
 impl FromStr for RunMode {

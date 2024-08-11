@@ -13,4 +13,4 @@ key = "test"
 url = "https://test.firebaseio.com"
 
 [gemini_config]
-api_key = "AIzaSyBKa7HfGpbey3M8FVfj6lk9-desCFMALFA"
+api_key = ""

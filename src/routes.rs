@@ -293,8 +293,6 @@ pub async fn insight_report_page(
             date: current_timestamp(),
         },
     };
-
-    let client = GeminiClient::new("".to_string()).await.unwrap();
     // HtmlTemplate(template)
     template
 }

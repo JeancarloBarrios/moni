@@ -2,11 +2,13 @@ use crate::templates;
 use crate::templates::{
     AddToReportDialogueTemplate, DocumentDetailsTemplate, DocumentsTemplate, InsightReportPage,
 };
-use askama_axum::IntoResponse;
+use axum::{extract::State, response::IntoResponse};
 use axum::extract::Path as AxumPath;
 use chrono::prelude::*;
 use vertex_ai::discovery_engine::client::{DataStoreClient, Document, SessionSpec, SnippetSpec, ExtractiveContentSpec, ContentSearchSpec, Mode, SpellCorrectionSpec, Condition, QueryExpansionSpec, DiscoveryEngineSearchRequest, SearchChunksRequest, SearchRequest};
-use crate::documents::read_documents;
+use gemini::client::GeminiClient;
+use std::sync::Arc;
+use crate::AppState;
 pub async fn home() -> impl IntoResponse {
     templates::Index
 }
@@ -167,7 +169,66 @@ pub async fn view_document(AxumPath(id): AxumPath<u64>) -> impl IntoResponse {
     template
 }
 
-pub async fn insight_report_page() -> impl IntoResponse {
+// TODO: new iteration we can create a datastore to customize templates per user
+pub fn build_report_prompt(insights_content: String) -> String {
+    let report_template = r#"
+        Create a report using the following template and using the next information as a baseline.
+
+        {{ insights }}
+
+        ----------------------------------
+
+        Summary of Global Public Policies Relevant to Climate Change
+
+        1. Executive Summary
+        Purpose of the Report: Provide an overview of the most significant public policies related to climate change globally.
+        Scope: Briefly mention the geographical regions covered and the types of policies (e.g., emission reduction targets, renewable energy incentives, etc.).
+        Key Findings: Highlight the most critical points, such as major policy trends, significant legislative actions, and emerging areas of focus.
+
+        2. Introduction
+        Background: Provide context on why climate-related public policies are important. Mention global initiatives like the Paris Agreement and the role of policy in driving climate action.
+        Objective: Clearly state the objective of the report, such as informing stakeholders of the latest policy developments or assessing the impact of these policies on your organization's goals.
+
+        3. Policy Analysis by Region
+        Region 1: [Name of Region]
+
+        Overview: Briefly describe the region's approach to climate policy.
+        Key Policies: List and describe the most relevant policies, including their goals, implementation status, and expected impact.
+        Challenges and Opportunities: Analyze any barriers to implementation or potential benefits for the region.
+
+        Region 2: [Name of Region]
+
+        Overview
+        Key Policies
+        Challenges and Opportunities
+
+        [Continue this structure for each region]
+
+        4. Thematic Analysis
+        Policy Types: Summarize the different types of policies observed (e.g., carbon pricing, renewable energy incentives, climate adaptation strategies).
+        Global Trends: Identify and discuss any global trends, such as increased focus on climate finance or nature-based solutions.
+        Comparative Analysis: Compare policies across regions, highlighting differences and similarities in approaches.
+
+        5. Impact on Industry/Organization
+        Relevance to Our Operations: Discuss how the identified policies may impact your organization, including potential risks and opportunities.
+        Strategic Recommendations: Provide recommendations on how to align your operations or strategies with these policies. Suggest actions for compliance, risk management, or leveraging opportunities.
+
+        6. Conclusion
+        Summary of Findings: Recap the most significant insights from your analysis.
+        Next Steps: Outline any further research or actions that should be taken based on the report's findings.
+
+        7. References
+        List all sources used in your research, formatted according to your company's or industry's preferred citation style.
+
+
+         If you are not able to find references, please ommit this section.
+        "#;
+        let final_report = report_template.replace("{{ insights }}", insights_content.as_str());
+        final_report
+}
+pub async fn insight_report_page(
+    State(app_state): State<Arc<AppState>>, // Extract the AppState
+) -> impl IntoResponse {
     let insights = vec![
         crate::documents::DocumentInsight {
             document: crate::documents::Document {
@@ -175,7 +236,7 @@ pub async fn insight_report_page() -> impl IntoResponse {
                 title: "Example Document".to_string(),
                 id: 101,
             },
-            insight: "The world is round.".to_string(),
+            insight: "Inisght #1.".to_string(),
             id: 1,
         },
         crate::documents::DocumentInsight {
@@ -184,7 +245,7 @@ pub async fn insight_report_page() -> impl IntoResponse {
                 title: "Example Document".to_string(),
                 id: 102,
             },
-            insight: "The world is flat.".to_string(),
+            insight: "Insight #2".to_string(),
             id: 2,
         },
         crate::documents::DocumentInsight {
@@ -193,17 +254,40 @@ pub async fn insight_report_page() -> impl IntoResponse {
                 title: "Example Document".to_string(),
                 id: 103,
             },
-            insight: "The world is a donut.".to_string(),
+            insight: "Insight #3".to_string(),
             id: 3,
         },
     ];
+    let gemini_client = Arc::clone(&app_state.gemini_client);
+    let prompt = build_report_prompt("Some insights about climate policy go here".to_string());
+    // Call the `text_post` method on the GeminiClient
+    let content = match gemini_client.request_text(prompt.as_str()).await {
+        Ok(response) => {
+            if let Some(gemini_response) = response.rest() {
+                let default_value = "no answer from Gemini".to_string();
+                let answer = gemini_response.candidates[0]
+                    .content
+                    .parts[0]
+                    .text
+                    .as_ref()
+                    .unwrap_or(&default_value);
+                answer.to_string()
+            } else {
+                "no answer from Gemini".to_string()
+            }
+        },
+        Err(e) => {
+            eprintln!("Error calling Gemini API: {:?}", e);
+            "Error calling Gemini API".to_string() // Return an error message as a string
+        }
+    };
+
 
     let template = InsightReportPage {
         insights: insights,
         report: crate::documents::Report {
             id: 1,
-            content: "This is a report on the insights gathered from various documents."
-                .to_string(),
+            content: content.to_string(),
             template: " This is the template to provide LLM for report generation".to_string(),
             title: "Insights Report".to_string(),
             date: current_timestamp(),

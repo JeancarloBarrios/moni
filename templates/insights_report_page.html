@@ -5,6 +5,14 @@
 {% block content %}
 <div class="document-header">
     <h1>Insights Report for Climate Policy</h1>
+    <div class="document-actions">
+        <button class="export-button" title="Export to PDF">
+            <img src="https://www.svgrepo.com/show/28209/pdf.svg" alt="PDF Icon" class="icon"/> Export to PDF
+        </button>
+        <button class="export-button" title="Export to Google Docs">
+            <img src="https://icons.iconarchive.com/icons/bokehlicia/captiva/256/web-google-docs-icon.png" alt="Google Docs Icon" class="icon"/> Export to Google Docs
+        </button>
+    </div>
 </div>
 
 <div class="container">
@@ -27,6 +35,33 @@
 </div>
 
 <style>
+    .document-actions {
+        display: flex;
+        align-items: center;
+    }
+
+    .export-button {
+        margin-left: 10px;
+        padding: 10px 20px;
+        border: none;
+        background-color: #007bff;
+        color: white;
+        border-radius: 5px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .export-button img.icon {
+        margin-right: 10px;
+        width: 30px;
+        height: 30px;
+    }
+
+    .export-button:hover {
+        background-color: #0056b3;
+    }
 
     .document-header {
         display: flex;

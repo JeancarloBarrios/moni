@@ -11,3 +11,6 @@ port = 8080
 [firebase_config]
 key = "test"
 url = "https://test.firebaseio.com"
+
+[gemini_config]
+api_key = ""

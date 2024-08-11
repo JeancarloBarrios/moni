@@ -272,7 +272,10 @@ impl DataStoreClient {
         Ok(search_response)
     }
 
-    pub async fn answer(&self, request: AnswerRequest) -> Result<Answer, Error> {
+    pub async fn answer(
+        &self,
+        request: AnswerRequest,
+    ) -> Result<FeedbackAnswerQueryResponse, Error> {
         let location = "global";
         let app_id = "moni-demo-final_1722720080773";
         let server_config = format!("projects/{}/locations/{}/collections/default_collection/engines/{}/servingConfigs/default_serving_config", request.project_id, location, app_id);
@@ -288,17 +291,44 @@ impl DataStoreClient {
             .error_for_status()
             .map_err(Error::HttpStatus)?;
 
-        let search_response: Answer = response.json().await.map_err(Error::ResponseJsonParsing)?;
+        let search_response: FeedbackAnswerQueryResponse =
+            response.json().await.map_err(Error::ResponseJsonParsing)?;
         Ok(search_response)
     }
 }
 
-// #[derive(Serialize, Deserialize, Debug)]
-// #[serde(rename_all = "camelCase")]
-// pub struct FeedbackAnswerQueryResponse {
-//     pub answer:
-// }
-//
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct FeedbackAnswerQueryResponse {
+    pub answer: Answer,
+    pub session: Session,
+    pub answer_query_token: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Session {
+    pub name: String,
+    pub state: SessionState,
+    pub user_pseudo_id: String,
+    pub turns: Vec<Turn>,
+    pub start_time: String,
+    pub end_time: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Turn {
+    pub query: Query,
+    pub answer: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum SessionState {
+    SateUnspecified,
+    InProgress,
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -310,6 +340,45 @@ pub struct Answer {
     pub references: Vec<AnswerReference>,
     pub related_questions: Vec<String>,
     pub steps: Vec<Step>,
+    pub query_understanding_info: QueryUnderstandingInfo,
+    pub answer_skipped_reasons: Vec<AnswerSkippedReason>,
+    pub create_time: String,
+    pub complete_time: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum AnswerSkippedReason {
+    AnswerSkippedReasonUnspecified, // Default value. The answer skipped reason is not specified.
+    AdversarialQueryIgnored,        // The adversarial query ignored case.
+    NonAnswerSeekingQueryIgnored,   // The non-answer seeking query ignored case.
+    OutOfDomainQueryIgnored,        // The out-of-domain query ignored case.
+    PotentialPolicyViolation,       // The potential policy violation case.
+    NoRelevantContent,              // The no relevant content case.
+    JailBreakingQueryIgnored,       // The jail-breaking query ignored case.
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct QueryUnderstandingInfo {
+    pub query_classification_info: Vec<QueryClassificationInfo>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct QueryClassificationInfo {
+    #[serde(rename = "type")]
+    pub query_classification_info_type: QueryClasificationInfoType,
+    pub positive: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum QueryClasificationInfoType {
+    TypeUnspecified,       // Unspecified query classification type.
+    AdversarialQuery,      // Adversarial query classification type.
+    NonAnswerSeekingQuery, // Non-answer-seeking query classification type.
+    JailBreakingQuery,     // Jail-breaking query classification type.
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -320,12 +389,49 @@ pub struct Step {
     pub thought: String,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct Action {
     pub observation: Observation,
+    pub search_actions: Vec<SearchAction>,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct Observation {
     pub search_results: Vec<SearchResult>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct SearchAction {
+    pub query: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ObservationSearchResult {
+    pub document: String,
+    pub uri: String,
+    pub title: String,
+    pub snippet_info: SnipetInfo,
+    pub chunk_info: ObservationSearchResultChunkInfo,
+    pub struct_data: Value,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct SnipetInfo {
+    pub snippet: String,
+    pub snippet_status: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ObservationSearchResultChunkInfo {
+    pub chunk: String,
+    pub content: String,
+    pub relevance_score: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

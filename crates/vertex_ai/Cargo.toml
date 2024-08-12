@@ -1,0 +1,18 @@
+[package]
+name = "vertex_ai"
+version = "0.1.0"
+edition = "2021"
+#google-cloud-discoveryengine-v1  
+#google.cloud.discoveryengine.v1
+[dependencies]
+reqwest = { workspace = true, features = ["json"] }
+tokio = { workspace = true, feature = ["full"]}
+gcp_auth = { workspace = true}
+thiserror = { workspace = true}
+serde = { workspace = true, features = ["derive"] }
+serde_derive = { workspace = true}
+serde_json = { workspace = true}
+
+gcloud-sdk = { version = "0.25", features = ["google-cloud"] }
+rand = "0.8.5"
+

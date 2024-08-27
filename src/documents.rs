@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use axum::extract::Path as AxumPath;
 use chrono::prelude::*;
 use askama_axum::IntoResponse;
+use crate::documents;
 use crate::templates::DocumentDetailsTemplate;
 #[derive(Deserialize)]
 pub struct DocumentCard {
@@ -12,7 +13,7 @@ pub struct DocumentCard {
 pub struct Document {
     pub url: String,
     pub title: String,
-    pub id: u32,
+    pub id: u32
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -70,7 +71,7 @@ pub async fn read_documents() -> Vec<Document> {
 
 // Handler to view a document and its chat
 pub async fn view_document(AxumPath(id): AxumPath<u64>) -> impl IntoResponse {
-    let dummy_document = Document {
+    let dummy_document = documents::Document {
         url: "https://pdfobject.com/pdf/sample.pdf".to_string(),
         title: "Example Document".to_string(),
         id: id as u32,

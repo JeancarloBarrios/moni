@@ -1,8 +1,9 @@
-use crate::documents::Document;
 use askama::Template;
 use axum::http::StatusCode;
 use axum::response::{Html, IntoResponse, Response};
 use crate::documents::{DocumentInsight, DocumentMessage, Report};
+use vertex_ai::discovery_engine::client::{ Document};
+use crate::documents;
 
 #[derive(Template)]
 #[template(path = "index.html")]
@@ -12,12 +13,13 @@ pub struct Index;
 #[template(path = "documents.html")]
 pub struct DocumentsTemplate {
     pub docs: Vec<Document>,
+    pub summary_text: String,
 }
 
 #[derive(Template)]
 #[template(path = "document_detail.html")]
 pub struct DocumentDetailsTemplate {
-    pub document: Document,
+    pub document: documents::Document,
     pub document_chat: Vec<DocumentMessage>,
 }
 

@@ -5,16 +5,63 @@ use crate::templates::{
 use askama_axum::IntoResponse;
 use axum::extract::Path as AxumPath;
 use chrono::prelude::*;
-
+use vertex_ai::discovery_engine::client::{DataStoreClient, Document, SessionSpec, SnippetSpec, ExtractiveContentSpec, ContentSearchSpec, Mode, SpellCorrectionSpec, Condition, QueryExpansionSpec, DiscoveryEngineSearchRequest, SearchChunksRequest, SearchRequest};
 use crate::documents::read_documents;
 pub async fn home() -> impl IntoResponse {
     templates::Index
 }
 
+// TODO: new iteration we can create a datastore per user/project
+const ProjectId: &str = "875055333740";
+const Collection: &str = "default_collection";
+const DatastoreId: &str = "moni-demo_1722720098936";
+
+// TODO: fetch from firebase
+const alerting_config: &str = "Climate and Carbon credit policies";
 //get documents handler
 pub async fn get_documents() -> impl IntoResponse {
+    let client = DataStoreClient::new().await.unwrap();
+    let request = SearchRequest {
+        project_id: ProjectId.to_string(),
+        discovery_engine_search_request: DiscoveryEngineSearchRequest {
+            session: "projects/875055333740/locations/global/collections/default_collection/engines/moni-demo-final_1722720080773/sessions/-".to_string(),
+            query: alerting_config.to_string(),
+            page_size: 10,
+            filter: "".to_string(),
+            query_expansion_spec: QueryExpansionSpec {
+                condition: Condition::Auto,
+                ..Default::default()
+            },
+            spell_correction_spec: SpellCorrectionSpec { mode: Mode::Auto },
+            content_search_spec: ContentSearchSpec {
+                extractive_content_spec: Some(ExtractiveContentSpec {
+                    max_extractive_segment_count: Some(1),
+                    ..Default::default()
+                }),
+                snippet_spec: Some(SnippetSpec {
+                    max_snippet_count: 1,
+                    return_snippet: true,
+                    ..Default::default()
+                }),
+                chunk_spec: None,
+                ..Default::default()
+            },
+            session_spec: SessionSpec {
+                search_result_persistence_count: 5,
+                ..Default::default()
+            },
+            ..Default::default()
+        },
+    };
+    let response = client.search(request).await.unwrap();
+    // Parse the documents from the response
+    let docs: Vec<Document> = response.results.unwrap_or_default().into_iter()
+        .filter_map(|result| result.document)
+        .collect();
+    
     let template = DocumentsTemplate {
-        docs: read_documents().await,
+        docs: docs,
+        summary_text: "Here are the documents that match your search query.".to_string(),
     };
     // HtmlTemplate(template)
     template
